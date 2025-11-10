@@ -1,63 +1,247 @@
-# Plan de Trabajo: Sistema de Gestión de Usuarios con FastAPI y UV
+# Plan de Trabajo: CRUD de Usuarios con FastAPI y UV (PoC)
 
 ## 📋 Descripción del Proyecto
-Desarrollo de una API REST para **gestión de usuarios** con operaciones CRUD, **autenticación segura (JWT)**, hashing de contraseñas con bcrypt, utilizando FastAPI, gestión de dependencias con UV, ejecución en entorno virtual (VENV) y preparación para contenerización con Docker.
+Desarrollo de una **Prueba de Concepto (PoC)** de API REST con operaciones **CRUD de usuarios**, utilizando FastAPI con **Clean Architecture**, gestión de dependencias con UV, ejecución en entorno virtual (VENV). 
+
+**Versión simplificada:** Sin autenticación en fase inicial, enfocado en implementar rápidamente el CRUD básico con arquitectura extensible.
 
 ---
 
-## 🎯 Objetivos del Proyecto
+## 🎯 Objetivos del Proyecto (PoC)
 
-1. Implementar un CRUD completo de usuarios con FastAPI
-2. Implementar sistema de autenticación seguro con JWT
-3. Proteger contraseñas con bcrypt/passlib
-4. Configurar gestión de dependencias con UV
-5. Ejecutar en entorno virtual (VENV)
-6. Implementar autorización basada en roles
-7. Preparar infraestructura para contenerización (Docker)
+1. ✅ Implementar CRUD completo de usuarios (Create, Read, Update, Delete)
+2. ✅ Usar Clean Architecture para extensibilidad futura
+3. ✅ Usar UV para gestión rápida de paquetes y entorno virtual
+4. ✅ Documentación automática con OpenAPI/Swagger
+5. ✅ Tests básicos (unit y e2e)
+6. 🔜 (Futuro) Agregar autenticación JWT cuando sea necesario
+7. 🔜 (Futuro) Contenerización con Docker
+
+**Nota:** UV es una herramienta que reemplaza a `pip` y gestiona entornos virtuales de forma más rápida.
 
 ---
 
-## 📐 Arquitectura Propuesta
+## 📐 Arquitectura Propuesta: Clean Architecture Simplificada
+
+Clean Architecture **simplificada para PoC**, manteniendo extensibilidad para el futuro.
+
+### **Principios de la Arquitectura:**
+1. **Separación de capas:** Domain, Application, Infrastructure, Presentation
+2. **Testabilidad:** Cada capa se puede testear independientemente
+3. **Extensible:** Fácil agregar autenticación/compliance después
+4. **Simple para empezar:** Solo lo necesario para CRUD de usuarios
+
+### **Estructura Simplificada (PoC):**
 
 ```
 seed-proyect/
 ├── app/
 │   ├── __init__.py
-│   ├── main.py                  # Punto de entrada de la aplicación
-│   ├── config.py                # Configuraciones
-│   ├── database.py              # Configuración de base de datos
-│   ├── models/
+│   ├── main.py                          # Punto de entrada FastAPI
+│   │
+│   ├── domain/                          # CAPA DE DOMINIO (lógica de negocio)
 │   │   ├── __init__.py
-│   │   └── user.py              # Modelo de Usuario (SQLAlchemy)
-│   ├── schemas/
+│   │   ├── entities/
+│   │   │   ├── __init__.py
+│   │   │   └── user.py                  # Entidad User (modelo de dominio)
+│   │   ├── repositories/                # Interfaces (Puertos)
+│   │   │   ├── __init__.py
+│   │   │   └── user_repository.py       # Interface UserRepository
+│   │   └── exceptions/
+│   │       ├── __init__.py
+│   │       └── user_exceptions.py       # Excepciones personalizadas
+│   │
+│   ├── application/                     # CAPA DE APLICACIÓN (casos de uso)
 │   │   ├── __init__.py
-│   │   ├── user.py              # Schemas de Usuario (Pydantic)
-│   │   └── auth.py              # Schemas de Autenticación (Login, Token)
-│   ├── routes/
+│   │   ├── use_cases/
+│   │   │   ├── __init__.py
+│   │   │   ├── create_user.py          # Caso de uso: Crear usuario
+│   │   │   ├── get_user.py             # Caso de uso: Obtener usuario
+│   │   │   ├── update_user.py          # Caso de uso: Actualizar usuario
+│   │   │   ├── delete_user.py          # Caso de uso: Eliminar usuario
+│   │   │   └── list_users.py           # Caso de uso: Listar usuarios
+│   │   └── dto/
+│   │       ├── __init__.py
+│   │       └── user_dto.py             # DTOs para transferencia de datos
+│   │
+│   ├── infrastructure/                  # CAPA DE INFRAESTRUCTURA (adaptadores)
 │   │   ├── __init__.py
-│   │   ├── users.py             # Endpoints CRUD de usuarios
-│   │   └── auth.py              # Endpoints de autenticación (login, register)
-│   ├── services/
+│   │   ├── database/
+│   │   │   ├── __init__.py
+│   │   │   ├── config.py               # Configuración SQLAlchemy
+│   │   │   ├── models/
+│   │   │   │   ├── __init__.py
+│   │   │   │   └── user_model.py       # Modelo ORM SQLAlchemy
+│   │   │   └── repositories/
+│   │   │       ├── __init__.py
+│   │   │       └── user_repository_impl.py  # Implementación del repositorio
+│   │   └── logging/
+│   │       ├── __init__.py
+│   │       └── logger_config.py
+│   │
+│   ├── presentation/                    # CAPA DE PRESENTACIÓN (API)
 │   │   ├── __init__.py
-│   │   ├── user_service.py      # Lógica de negocio de usuarios
-│   │   └── auth_service.py      # Lógica de autenticación
-│   ├── core/
-│   │   ├── __init__.py
-│   │   ├── security.py          # Funciones de seguridad (hash, JWT)
-│   │   └── dependencies.py      # Dependencias de autenticación
-│   └── utils/
+│   │   ├── api/
+│   │   │   ├── __init__.py
+│   │   │   └── v1/
+│   │   │       ├── __init__.py
+│   │   │       ├── endpoints/
+│   │   │       │   ├── __init__.py
+│   │   │       │   └── users.py        # Endpoints CRUD de usuarios
+│   │   │       ├── dependencies.py     # Dependencies de FastAPI
+│   │   │       └── router.py           # Router principal v1
+│   │   ├── schemas/
+│   │   │   ├── __init__.py
+│   │   │   └── user_schema.py          # Schemas Pydantic para validación
+│   │   └── middleware/
+│   │       ├── __init__.py
+│   │       └── error_handler.py
+│   │
+│   └── config/
 │       ├── __init__.py
-│       └── logger.py            # Configuración de logging
+│       └── settings.py                  # Configuraciones con Pydantic
+│
 ├── tests/
 │   ├── __init__.py
-│   ├── test_users.py
-│   └── test_auth.py
-├── .env                         # Variables de entorno
+│   ├── unit/
+│   │   ├── __init__.py
+│   │   └── test_user_use_cases.py
+│   └── e2e/
+│       ├── __init__.py
+│       └── test_user_endpoints.py
+│
+├── .env
 ├── .gitignore
-├── pyproject.toml               # Configuración UV
 ├── README.md
-└── requirements.txt             # Dependencias del proyecto
+└── requirements.txt
 ```
+
+### **Flujo de Dependencias:**
+```
+Presentation → Application → Domain ← Infrastructure
+   (API)       (Use Cases)   (Entities)  (Database)
+```
+
+**Nota:** Arquitectura lista para extender con autenticación, compliance, etc. cuando sea necesario.
+
+---
+
+## 🧩 Ventajas de Clean Architecture (Incluso para PoC)
+
+### ✅ **Extensibilidad:**
+- **Agregar autenticación después:** Sin tocar código existente
+- **Agregar nuevos módulos** (compliance, productos, etc.) es simple
+- **Versionar API:** Fácil crear `api/v2/` cuando sea necesario
+
+### ✅ **Mantenibilidad:**
+- **Separación clara:** Cada capa tiene un propósito específico
+- **Cambios localizados:** Cambiar DB no afecta lógica de negocio
+- **Código limpio:** Fácil de entender y modificar
+
+### ✅ **Testabilidad:**
+- **Tests unitarios rápidos:** Use cases sin depender de DB
+- **Mocks fáciles:** Interfaces permiten sustituir implementaciones
+- **Tests aislados:** Cada capa se prueba independientemente
+
+---
+
+## 🔌 Ejemplo Rápido: Flujo de Crear Usuario
+
+### **1. Domain (Entidad)**
+```python
+# app/domain/entities/user.py
+from dataclasses import dataclass
+from typing import Optional
+
+@dataclass
+class User:
+    """Entidad de dominio"""
+    id: Optional[int]
+    email: str
+    name: str
+    age: int
+    
+    def is_adult(self) -> bool:
+        """Lógica de negocio"""
+        return self.age >= 18
+```
+
+### **2. Application (Caso de Uso)**
+```python
+# app/application/use_cases/create_user.py
+from app.domain.entities.user import User
+from app.domain.repositories.user_repository import UserRepository
+
+class CreateUserUseCase:
+    def __init__(self, repository: UserRepository):
+        self.repository = repository
+    
+    def execute(self, email: str, name: str, age: int) -> User:
+        # Validaciones
+        if age < 0:
+            raise ValueError("Age must be positive")
+        
+        # Crear entidad
+        user = User(id=None, email=email, name=name, age=age)
+        
+        # Guardar
+        return self.repository.save(user)
+```
+
+### **3. Infrastructure (Repositorio)**
+```python
+# app/infrastructure/database/repositories/user_repository_impl.py
+from sqlalchemy.orm import Session
+from app.domain.repositories.user_repository import UserRepository
+from app.domain.entities.user import User
+from app.infrastructure.database.models.user_model import UserModel
+
+class UserRepositoryImpl(UserRepository):
+    def __init__(self, db: Session):
+        self.db = db
+    
+    def save(self, user: User) -> User:
+        db_user = UserModel(email=user.email, name=user.name, age=user.age)
+        self.db.add(db_user)
+        self.db.commit()
+        self.db.refresh(db_user)
+        return User(id=db_user.id, email=db_user.email, name=db_user.name, age=db_user.age)
+```
+
+### **4. Presentation (API)**
+```python
+# app/presentation/api/v1/endpoints/users.py
+from fastapi import APIRouter, Depends
+from app.application.use_cases.create_user import CreateUserUseCase
+from app.presentation.schemas.user_schema import UserCreate, UserResponse
+
+router = APIRouter(prefix="/users", tags=["Users"])
+
+@router.post("/", response_model=UserResponse, status_code=201)
+def create_user(
+    data: UserCreate,
+    use_case: CreateUserUseCase = Depends(get_create_user_use_case)
+):
+    user = use_case.execute(data.email, data.name, data.age)
+    return UserResponse.from_entity(user)
+```
+
+### **Flujo Completo:**
+```
+1. HTTP POST /api/v1/users
+   ↓
+2. Endpoint llama al Use Case
+   ↓
+3. Use Case crea la entidad User
+   ↓
+4. Use Case llama al Repository
+   ↓
+5. Repository guarda en DB (SQLAlchemy)
+   ↓
+6. Respuesta JSON al cliente
+```
+
+**Ventaja:** Puedes agregar autenticación después sin tocar esta lógica. ✅
 
 ---
 
@@ -66,7 +250,13 @@ seed-proyect/
 ### **FASE 1: Configuración del Entorno de Desarrollo**
 
 #### 1.1 Instalación de UV
-**Objetivo:** Instalar el gestor de paquetes UV
+**Objetivo:** Instalar UV (gestor de paquetes rápido que reemplaza pip)
+
+**¿Qué es UV?**
+- Herramienta escrita en Rust, mucho más rápida que pip
+- Crea y gestiona entornos virtuales (venv)
+- Instala paquetes Python
+- Compatible con pip (usa `uv pip install` en vez de `pip install`)
 
 **Comandos:**
 ```powershell
@@ -79,12 +269,12 @@ powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
 uv --version
 ```
 
-#### 1.2 Creación del Entorno Virtual
-**Objetivo:** Configurar un entorno virtual aislado para el proyecto
+#### 1.2 Creación del Entorno Virtual con UV
+**Objetivo:** Crear un entorno virtual aislado usando UV
 
 **Comandos desde:** `C:\workspace\seed-proyect`
 ```powershell
-# Crear entorno virtual con UV
+# Crear entorno virtual (.venv) usando UV
 uv venv
 
 # Activar el entorno virtual
@@ -92,16 +282,17 @@ uv venv
 ```
 
 **Resultado Esperado:**
-- Directorio `.venv/` creado
+- Directorio `.venv/` creado con Python aislado
 - Prompt debe mostrar `(.venv)` al inicio
+- UV puede instalar paquetes en este venv
 
-#### 1.3 Instalación de Dependencias Base
-**Objetivo:** Instalar FastAPI y dependencias principales
+#### 1.3 Instalación de Dependencias (Simplificadas para PoC)
+**Objetivo:** Instalar solo lo necesario para CRUD básico
 
 **Comandos desde:** `C:\workspace\seed-proyect`
 ```powershell
 # Con entorno virtual activado
-uv pip install fastapi[all]
+uv pip install fastapi
 uv pip install uvicorn[standard]
 uv pip install sqlalchemy
 uv pip install python-dotenv
@@ -109,23 +300,17 @@ uv pip install pydantic
 uv pip install pydantic-settings
 ```
 
-#### 1.4 Instalación de Dependencias de Seguridad
-**Objetivo:** Instalar librerías para autenticación y seguridad
-
-**Comandos desde:** `C:\workspace\seed-proyect`
-```powershell
-# Dependencias de seguridad
-uv pip install "passlib[bcrypt]"
-uv pip install python-jose[cryptography]
-uv pip install python-multipart
-```
-
 **Justificación:**
-- `passlib[bcrypt]`: Hashing seguro de contraseñas con bcrypt
-- `python-jose[cryptography]`: Creación y validación de tokens JWT
-- `python-multipart`: Soporte para formularios (login con form-data)
+- `fastapi`: Framework web
+- `uvicorn[standard]`: Servidor ASGI
+- `sqlalchemy`: ORM para base de datos
+- `python-dotenv`: Variables de entorno
+- `pydantic`: Validación de datos
+- `pydantic-settings`: Configuración
 
-#### 1.5 Generar archivo de dependencias
+**Nota:** No instalamos `passlib`, `python-jose` ni `python-multipart` porque no usaremos autenticación en esta fase.
+
+#### 1.4 Generar archivo de dependencias
 **Objetivo:** Documentar dependencias del proyecto
 
 **Comandos desde:** `C:\workspace\seed-proyect`
@@ -135,23 +320,57 @@ uv pip freeze > requirements.txt
 
 ---
 
-### **FASE 2: Estructura Base del Proyecto**
+### **FASE 2: Estructura Base del Proyecto (Simplificada)**
 
 #### 2.1 Crear Estructura de Directorios
-**Objetivo:** Organizar el proyecto siguiendo mejores prácticas
+**Objetivo:** Crear estructura Clean Architecture simplificada para PoC
 
 **Comandos desde:** `C:\workspace\seed-proyect`
 ```powershell
-New-Item -ItemType Directory -Path app, app\models, app\schemas, app\routes, app\services, app\core, app\utils, tests -Force
+# Crear estructura simplificada
+New-Item -ItemType Directory -Path `
+    app, `
+    app\domain, app\domain\entities, app\domain\repositories, app\domain\exceptions, `
+    app\application, app\application\use_cases, app\application\dto, `
+    app\infrastructure, app\infrastructure\database, app\infrastructure\database\models, app\infrastructure\database\repositories, app\infrastructure\logging, `
+    app\presentation, app\presentation\api, app\presentation\api\v1, app\presentation\api\v1\endpoints, app\presentation\schemas, app\presentation\middleware, `
+    app\config, `
+    tests, tests\unit, tests\e2e `
+    -Force
 ```
+
+**Justificación Técnica:**
+- **Domain:** Entidad User + Interface UserRepository
+- **Application:** 5 Use Cases (create, get, update, delete, list)
+- **Infrastructure:** Implementación del repositorio con SQLAlchemy
+- **Presentation:** Endpoints REST para CRUD
+- **Tests:** unit (sin DB) y e2e (con API)
 
 #### 2.2 Crear Archivos __init__.py
 **Objetivo:** Convertir directorios en paquetes Python
 
 **Comandos desde:** `C:\workspace\seed-proyect`
 ```powershell
-New-Item -ItemType File -Path app\__init__.py, app\models\__init__.py, app\schemas\__init__.py, app\routes\__init__.py, app\services\__init__.py, app\core\__init__.py, app\utils\__init__.py, tests\__init__.py
+# Domain
+New-Item -ItemType File -Path app\domain\__init__.py, app\domain\entities\__init__.py, app\domain\repositories\__init__.py, app\domain\exceptions\__init__.py
+
+# Application
+New-Item -ItemType File -Path app\application\__init__.py, app\application\use_cases\__init__.py, app\application\dto\__init__.py
+
+# Infrastructure
+New-Item -ItemType File -Path app\infrastructure\__init__.py, app\infrastructure\database\__init__.py, app\infrastructure\database\models\__init__.py, app\infrastructure\database\repositories\__init__.py, app\infrastructure\logging\__init__.py
+
+# Presentation
+New-Item -ItemType File -Path app\presentation\__init__.py, app\presentation\api\__init__.py, app\presentation\api\v1\__init__.py, app\presentation\api\v1\endpoints\__init__.py, app\presentation\schemas\__init__.py, app\presentation\middleware\__init__.py
+
+# Config and tests
+New-Item -ItemType File -Path app\config\__init__.py, app\__init__.py, tests\__init__.py, tests\unit\__init__.py, tests\e2e\__init__.py
 ```
+
+**Resultado Esperado:**
+- Estructura Clean Architecture lista para CRUD de usuarios
+- Todos los directorios son paquetes Python válidos
+- Simplificado pero extensible para el futuro
 
 #### 2.3 Crear archivo .gitignore
 **Objetivo:** Excluir archivos innecesarios del control de versiones
@@ -192,7 +411,7 @@ uv pip install psycopg2-binary
 ```
 
 #### 3.2 Crear archivo de configuración (.env)
-**Objetivo:** Centralizar variables de entorno
+**Objetivo:** Centralizar variables de entorno (simplicado para PoC)
 
 **Contenido de `.env`:**
 ```env
@@ -202,21 +421,13 @@ DATABASE_URL=sqlite:///./app.db
 # Configuración general
 API_VERSION=v1
 DEBUG=True
+APP_NAME=Users CRUD API
 
-# Seguridad JWT
-SECRET_KEY=tu_clave_secreta_super_segura_cambiar_en_produccion
-ALGORITHM=HS256
-ACCESS_TOKEN_EXPIRE_MINUTES=30
-REFRESH_TOKEN_EXPIRE_DAYS=7
+# CORS (origenes permitidos)
+ALLOWED_ORIGINS=http://localhost:3000,http://localhost:8080
 ```
 
-**Generar SECRET_KEY seguro:**
-```powershell
-# Desde PowerShell con Python
-python -c "import secrets; print(secrets.token_urlsafe(32))"
-```
-
-**⚠️ IMPORTANTE:** Nunca commitear el archivo `.env` con claves reales al repositorio
+**Nota:** No incluimos variables de seguridad (JWT) en esta fase inicial del PoC.
 
 #### 3.3 Implementar database.py
 **Objetivo:** Configurar conexión a base de datos con SQLAlchemy
@@ -881,32 +1092,27 @@ docker-compose down -v
 
 ---
 
-## 📦 Dependencias del Proyecto
+## 📦 Dependencias del Proyecto (Simplificadas)
 
-### Dependencias de Producción
-- `fastapi[all]` - Framework web moderno y rápido
+### Dependencias de Producción (PoC)
+- `fastapi` - Framework web moderno y rápido
 - `uvicorn[standard]` - Servidor ASGI de alto rendimiento
 - `sqlalchemy` - ORM para base de datos
 - `pydantic` - Validación de datos y serialización
-- `pydantic-settings` - Gestión de configuraciones desde variables de entorno
-- `python-dotenv` - Carga de variables de entorno desde archivos .env
-- `passlib[bcrypt]` - Hashing seguro de contraseñas con bcrypt
-- `python-jose[cryptography]` - Creación y validación de tokens JWT
-- `python-multipart` - Soporte para form-data (requerido para login)
-- `psycopg2-binary` - Driver PostgreSQL (opcional, para producción)
+- `pydantic-settings` - Gestión de configuraciones
+- `python-dotenv` - Carga de variables de entorno
 
 ### Dependencias de Desarrollo
 - `pytest` - Framework de testing
 - `httpx` - Cliente HTTP para tests
-- `pytest-cov` - Cobertura de tests
-- `pytest-asyncio` - Soporte para tests asíncronos
+- `pytest-cov` - Cobertura de tests (opcional)
 
-### Dependencias Opcionales (Mejoras Futuras)
-- `alembic` - Migraciones de base de datos
-- `slowapi` - Rate limiting
-- `redis` - Cache y sesiones
-- `celery` - Tareas asíncronas
-- `sentry-sdk` - Monitoreo de errores
+### Para Agregar Después (Cuando sea necesario)
+- `passlib[bcrypt]` - Hashing de contraseñas (cuando agregues autenticación)
+- `python-jose[cryptography]` - Tokens JWT (cuando agregues autenticación)
+- `python-multipart` - Soporte para form-data (cuando agregues autenticación)
+- `alembic` - Migraciones de base de datos (para producción)
+- `psycopg2-binary` - Driver PostgreSQL (para producción)
 
 ---
 
@@ -956,75 +1162,82 @@ alembic downgrade -1
 
 ---
 
-## 📊 Criterios de Éxito
+## 📊 Criterios de Éxito (PoC Simplificado)
 
 ### Infraestructura
-- [ ] Entorno virtual configurado y funcionando
-- [ ] Dependencias instaladas con UV
-- [ ] Estructura de proyecto organizada
-- [ ] Base de datos configurada y conectada
+- [ ] Entorno virtual configurado y funcionando con UV
+- [ ] Dependencias básicas instaladas (fastapi, uvicorn, sqlalchemy)
+- [ ] Estructura Clean Architecture creada
+- [ ] Base de datos SQLite configurada
 
-### Seguridad y Autenticación
-- [ ] Funciones de hashing de contraseñas implementadas (bcrypt)
-- [ ] Generación y validación de tokens JWT funcionando
-- [ ] Dependencias de autenticación (get_current_user) implementadas
-- [ ] SECRET_KEY segura generada y configurada
-- [ ] Contraseñas nunca expuestas en responses
+### Domain Layer
+- [ ] Entidad User implementada (user.py)
+- [ ] Interface UserRepository definida
+- [ ] Excepciones personalizadas creadas
 
-### Modelos y Schemas
-- [ ] Modelo User con todos los campos implementado
-- [ ] Schemas de Usuario (Create, Update, Response) implementados
-- [ ] Schemas de Autenticación (Login, Token) implementados
-- [ ] Validaciones de Pydantic funcionando correctamente
+### Application Layer
+- [ ] Use Case CreateUser implementado
+- [ ] Use Case GetUser implementado
+- [ ] Use Case UpdateUser implementado
+- [ ] Use Case DeleteUser implementado
+- [ ] Use Case ListUsers implementado
 
-### Servicios de Negocio
-- [ ] Servicio de autenticación completo (login, register, refresh)
-- [ ] Servicio CRUD de usuarios completo
-- [ ] Logging exhaustivo en todos los servicios
-- [ ] Manejo de errores apropiado
+### Infrastructure Layer
+- [ ] Modelo SQLAlchemy UserModel implementado
+- [ ] UserRepositoryImpl implementado
+- [ ] Configuración de base de datos (config.py)
 
-### Endpoints
-- [ ] Endpoints de autenticación funcionando (register, login, refresh, me)
-- [ ] Endpoints CRUD de usuarios funcionando
-- [ ] Autorización basada en roles implementada
-- [ ] Usuarios pueden gestionar su propio perfil
-- [ ] Admins pueden gestionar todos los usuarios
-- [ ] Documentación OpenAPI completa y accesible
-
-### Testing
-- [ ] Tests de autenticación implementados
-- [ ] Tests CRUD de usuarios implementados
-- [ ] Tests de autorización por roles
-- [ ] Cobertura de tests > 80%
+### Presentation Layer
+- [ ] Schemas Pydantic (UserCreate, UserUpdate, UserResponse)
+- [ ] Endpoints CRUD implementados (POST, GET, PUT, DELETE)
+- [ ] Router configurado y registrado
+- [ ] Middleware de manejo de errores
 
 ### Ejecución
-- [ ] Aplicación ejecutándose correctamente
-- [ ] Login y registro funcionando en Swagger UI
-- [ ] Endpoints protegidos requiriendo JWT
+- [ ] Aplicación ejecutándose en http://localhost:8000
+- [ ] Documentación Swagger accesible en /docs
+- [ ] Crear usuario funciona correctamente
+- [ ] Listar usuarios funciona correctamente
+- [ ] Obtener usuario por ID funciona
+- [ ] Actualizar usuario funciona
+- [ ] Eliminar usuario funciona
 - [ ] Logging visible en consola
-- [ ] Manejo de errores robusto
-- [ ] Usuario superadmin creado automáticamente
 
-### Docker (Fase Final)
-- [ ] Dockerfile creado y optimizado
-- [ ] docker-compose.yml con API + PostgreSQL + pgAdmin
-- [ ] Aplicación ejecutándose en contenedores
-- [ ] Variables de entorno configuradas para Docker
+### Testing (Básico)
+- [ ] Tests unitarios de Use Cases
+- [ ] Tests e2e de endpoints
+- [ ] Tests pasan sin errores
+
+### Documentación
+- [ ] README actualizado
+- [ ] OpenAPI docs generados automáticamente
+- [ ] Endpoints documentados con descripciones
+
 
 ---
 
-## 🚀 Próximos Pasos Después de Completar el Plan
+## 🚀 Próximos Pasos Después de Completar el PoC
 
-1. **Migraciones de Base de Datos:** Implementar Alembic para gestionar cambios en esquema de forma versionada
-2. **Email Verification:** Sistema de verificación de email con tokens de activación
-3. **Password Recovery:** Recuperación de contraseña mediante email
-4. **Two-Factor Authentication (2FA):** Autenticación de dos factores con TOTP
-5. **Rate Limiting:** Protección contra ataques de fuerza bruta y abuso
-6. **Caching con Redis:** Mejorar rendimiento con cache de sesiones y datos frecuentes
-7. **Monitoreo:** Implementar Prometheus, Grafana o Sentry para monitoreo en producción
-8. **CI/CD:** Configurar pipeline con GitHub Actions o GitLab CI
-9. **Deploy a Producción:** Desplegar en AWS, Google Cloud, Azure, o plataformas como Railway/Render
-10. **WebSockets:** Notificaciones en tiempo real (opcional)
+### **Fase 2 - Agregar Seguridad (Cuando sea necesario):**
+1. **Autenticación JWT:** Login, tokens de acceso y refresh
+2. **Hash de Contraseñas:** bcrypt/passlib para passwords
+3. **Autorización por Roles:** user, admin, superadmin
+4. **Proteger Endpoints:** Requerir autenticación en CRUD
+
+### **Fase 3 - Preparar para Producción:**
+5. **Migraciones con Alembic:** Control de versiones de DB
+6. **PostgreSQL:** Cambiar de SQLite a PostgreSQL
+7. **Docker:** Contenerización con docker-compose
+8. **Tests Completos:** Aumentar cobertura > 80%
+
+### **Fase 4 - Funcionalidades Avanzadas (Opcional):**
+9. **Compliance/Auditoría:** Registros de operaciones
+10. **Email Verification:** Validar emails con tokens
+11. **Rate Limiting:** Protección contra abuso
+12. **Monitoreo:** Sentry, Prometheus, Grafana
+13. **CI/CD:** GitHub Actions para deployment automático
+
+**Nota:** La arquitectura Clean está lista para soportar todas estas mejoras sin reescribir código existente. ✅
 
 ---
 
@@ -1036,19 +1249,30 @@ alembic downgrade -1
 - [Pydantic Documentation](https://docs.pydantic.dev/) - Validación de datos
 - [SQLAlchemy Documentation](https://docs.sqlalchemy.org/) - ORM
 
+### Clean Architecture & Design Patterns
+- [Clean Architecture by Uncle Bob](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html) - Artículo original
+- [Hexagonal Architecture](https://alistair.cockburn.us/hexagonal-architecture/) - Ports & Adapters
+- [Clean Architecture in Python](https://github.com/cosmic-python/book) - Libro gratuito
+- [Dependency Injector](https://python-dependency-injector.ets-labs.org/) - DI para Python
+- [Martin Fowler - Application Architecture](https://martinfowler.com/architecture/) - Patterns
+
 ### Seguridad
 - [OWASP Top 10](https://owasp.org/www-project-top-ten/) - Principales riesgos de seguridad
 - [JWT.io](https://jwt.io/) - Información sobre JSON Web Tokens
 - [Passlib Documentation](https://passlib.readthedocs.io/) - Hashing de contraseñas
+- [NIST Digital Identity Guidelines](https://pages.nist.gov/800-63-3/) - Estándares de autenticación
+
 
 ### Herramientas
 - [UV Documentation](https://github.com/astral-sh/uv) - Gestor de paquetes rápido
 - [Docker Documentation](https://docs.docker.com/) - Contenerización
 - [Pytest Documentation](https://docs.pytest.org/) - Testing
+- [Alembic](https://alembic.sqlalchemy.org/) - Migraciones de base de datos
 
 ### Tutoriales y Guías
 - [FastAPI Best Practices](https://github.com/zhanymkanov/fastapi-best-practices) - Mejores prácticas
 - [Real Python FastAPI](https://realpython.com/fastapi-python-web-apis/) - Tutorial completo
+- [Full Stack FastAPI Template](https://github.com/tiangolo/full-stack-fastapi-template) - Template oficial con buenas prácticas
 
 ---
 
@@ -1199,7 +1423,24 @@ Antes de desplegar a producción, verificar:
 ---
 
 **Fecha de creación:** 2025-11-10  
-**Versión:** 2.0  
-**Estado:** Plan completo - Sistema de gestión de usuarios con autenticación segura  
+**Versión:** 4.0 - PoC Simplificado  
+**Arquitectura:** Clean Architecture (Simplificada)  
+**Estado:** Prueba de Concepto - CRUD de usuarios sin autenticación  
 **Última actualización:** 2025-11-10
+
+---
+
+## 📌 Resumen Ejecutivo
+
+Este proyecto implementa una **Prueba de Concepto (PoC)** de CRUD de usuarios con:
+
+✅ **CRUD completo** (Create, Read, Update, Delete, List)  
+✅ **Clean Architecture** simplificada para extensibilidad  
+✅ **Sin autenticación** en fase inicial (se puede agregar después)  
+✅ **API RESTful** con FastAPI  
+✅ **SQLite** para desarrollo rápido  
+✅ **Documentación OpenAPI** automática  
+✅ **Tests básicos** (unit y e2e)  
+
+**Ideal para:** Prueba de concepto rápida con arquitectura extensible para agregar funcionalidades después.
 
