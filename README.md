@@ -5,6 +5,8 @@ Desarrollo de una **Prueba de Concepto (PoC)** de API REST con operaciones **CRU
 
 **Versión simplificada:** Sin autenticación en fase inicial, enfocado en implementar rápidamente el CRUD básico con arquitectura extensible.
 
+**Filosofía de Desarrollo:** **TDD (Test-Driven Development)** - Escribir tests antes del código de implementación.
+
 ---
 
 ## 🎯 Objetivos del Proyecto (PoC)
@@ -245,6 +247,197 @@ def create_user(
 
 ---
 
+## 🧪 Filosofía TDD (Test-Driven Development)
+
+Este proyecto sigue la metodología **TDD**: escribir tests **ANTES** de implementar el código.
+
+### **Ciclo TDD (Red-Green-Refactor):**
+
+```
+1. 🔴 RED: Escribir test que falla
+   ↓
+2. 🟢 GREEN: Escribir código mínimo para pasar el test
+   ↓
+3. 🔵 REFACTOR: Mejorar el código manteniendo tests verdes
+   ↓
+   Repetir...
+```
+
+### **Aplicando TDD por Capas:**
+
+#### **1. Domain Layer (Tests Unitarios Puros)**
+```python
+# tests/unit/test_user_entity.py
+def test_user_is_adult():
+    # 🔴 RED: Test primero
+    user = User(id=1, email="test@test.com", name="Test", age=20)
+    assert user.is_adult() == True
+
+# Luego implementar User.is_adult() en domain/entities/user.py
+```
+
+#### **2. Application Layer (Tests de Use Cases)**
+```python
+# tests/unit/test_create_user_use_case.py
+def test_create_user_saves_to_repository():
+    # 🔴 RED: Test con mock
+    mock_repo = Mock(spec=UserRepository)
+    use_case = CreateUserUseCase(mock_repo)
+    
+    user = use_case.execute("test@test.com", "Test", 25)
+    
+    mock_repo.save.assert_called_once()
+
+# Luego implementar CreateUserUseCase.execute()
+```
+
+#### **3. Infrastructure Layer (Tests de Integración)**
+```python
+# tests/integration/test_user_repository.py
+def test_user_repository_saves_and_retrieves(db_session):
+    # 🔴 RED: Test con DB real (en memoria)
+    repo = UserRepositoryImpl(db_session)
+    user = User(id=None, email="test@test.com", name="Test", age=25)
+    
+    saved_user = repo.save(user)
+    
+    assert saved_user.id is not None
+    assert saved_user.email == "test@test.com"
+
+# Luego implementar UserRepositoryImpl
+```
+
+#### **4. Presentation Layer (Tests E2E)**
+```python
+# tests/e2e/test_user_endpoints.py
+def test_create_user_endpoint(client):
+    # 🔴 RED: Test del endpoint
+    response = client.post("/api/v1/users/", json={
+        "email": "test@test.com",
+        "name": "Test User",
+        "age": 25
+    })
+    
+    assert response.status_code == 201
+    assert response.json()["email"] == "test@test.com"
+
+# Luego implementar el endpoint en presentation/api/v1/endpoints/users.py
+```
+
+### **Orden de Implementación con TDD:**
+
+Para cada funcionalidad (ej: CreateUser):
+
+1. **Test Domain:** Entidad User
+2. **Test Application:** CreateUserUseCase
+3. **Test Infrastructure:** UserRepositoryImpl
+4. **Test Presentation:** POST /users endpoint
+
+**Resultado:** Cada capa tiene tests antes de implementarse. ✅
+
+### **Comandos para Ejecutar Tests:**
+
+```powershell
+# Ejecutar todos los tests
+pytest
+
+# Ejecutar solo tests unitarios (rápidos) - por directorio
+pytest tests/unit/ -v
+
+# Ejecutar solo tests unitarios - por marker
+pytest -m unit
+
+# Ejecutar tests de integración
+pytest -m integration
+
+# Ejecutar tests e2e
+pytest -m e2e
+
+# Excluir tests lentos (desarrollo rápido)
+pytest -m "not slow"
+
+# Ejecutar con cobertura
+pytest --cov=app --cov-report=html
+
+# Modo watch (TDD) - re-ejecutar al guardar
+ptw
+
+# Watch solo tests unitarios
+ptw -- -m unit
+
+# Verificar cobertura mínima (80%)
+pytest --cov=app --cov-fail-under=80
+```
+
+**Nota:** La configuración de pytest está en `pytest.ini` con opciones optimizadas para TDD.
+
+### **Markers de Pytest (para organizar tests):**
+
+Marca tus tests con decoradores para ejecutarlos selectivamente:
+
+```python
+import pytest
+
+# Test unitario (rápido, sin DB)
+@pytest.mark.unit
+def test_user_entity():
+    user = User(id=1, email="test@test.com", name="Test", age=25)
+    assert user.is_adult() == True
+
+# Test de integración (con DB)
+@pytest.mark.integration
+def test_user_repository(db_session):
+    repo = UserRepositoryImpl(db_session)
+    # ...
+
+# Test e2e (API completa)
+@pytest.mark.e2e
+def test_create_user_endpoint(client):
+    response = client.post("/api/v1/users/", json={...})
+    # ...
+
+# Test lento (puede omitirse en desarrollo)
+@pytest.mark.slow
+def test_heavy_operation():
+    # Operación que tarda mucho...
+    pass
+```
+
+### **Beneficios de TDD en Clean Architecture:**
+
+✅ **Diseño emergente:** Los tests guían el diseño de interfaces  
+✅ **Menos bugs:** Código cubierto desde el inicio  
+✅ **Refactoring seguro:** Tests garantizan que no rompiste nada  
+✅ **Documentación viva:** Los tests documentan cómo usar el código  
+✅ **Desarrollo más rápido:** Detectas errores inmediatamente  
+
+### **Estructura de Tests Esperada:**
+
+```
+tests/
+├── conftest.py              # Fixtures compartidos (DB, cliente HTTP, mocks)
+├── unit/                    # Tests rápidos sin dependencias
+│   ├── domain/
+│   │   └── test_user_entity.py
+│   └── use_cases/
+│       ├── test_create_user.py
+│       ├── test_get_user.py
+│       ├── test_update_user.py
+│       ├── test_delete_user.py
+│       └── test_list_users.py
+├── integration/             # Tests con DB (SQLite en memoria)
+│   └── test_user_repository.py
+└── e2e/                     # Tests de API completa
+    └── test_user_endpoints.py
+```
+
+**Fixtures importantes en `conftest.py`:**
+- `db_session`: Sesión de base de datos (SQLite en memoria)
+- `client`: Cliente HTTP de FastAPI para tests e2e
+- `mock_user_repository`: Mock del repositorio para tests unitarios
+
+---
+
 ## 🗓️ Plan de Trabajo Detallado
 
 ### **FASE 1: Configuración del Entorno de Desarrollo**
@@ -286,18 +479,27 @@ uv venv
 - Prompt debe mostrar `(.venv)` al inicio
 - UV puede instalar paquetes en este venv
 
-#### 1.3 Instalación de Dependencias (Simplificadas para PoC)
-**Objetivo:** Instalar solo lo necesario para CRUD básico
+#### 1.3 Instalación de Dependencias (Producción + TDD)
+**Objetivo:** Instalar dependencias de producción y desarrollo para TDD
 
 **Comandos desde:** `C:\workspace\seed-proyect`
 ```powershell
 # Con entorno virtual activado
+
+# Dependencias de producción
 uv pip install fastapi
 uv pip install uvicorn[standard]
 uv pip install sqlalchemy
 uv pip install python-dotenv
 uv pip install pydantic
 uv pip install pydantic-settings
+
+# Dependencias de desarrollo (TDD)
+uv pip install pytest
+uv pip install httpx
+uv pip install pytest-cov
+uv pip install pytest-watch
+uv pip install pytest-mock
 ```
 
 **Justificación:**
@@ -307,8 +509,13 @@ uv pip install pydantic-settings
 - `python-dotenv`: Variables de entorno
 - `pydantic`: Validación de datos
 - `pydantic-settings`: Configuración
+- `pytest`: Framework de testing (TDD)
+- `httpx`: Cliente HTTP para tests e2e
+- `pytest-cov`: Cobertura de código
+- `pytest-watch`: Auto-ejecutar tests al guardar (TDD workflow)
+- `pytest-mock`: Mocking para tests unitarios
 
-**Nota:** No instalamos `passlib`, `python-jose` ni `python-multipart` porque no usaremos autenticación en esta fase.
+**Nota:** Con TDD, instalaremos las dependencias de testing desde el inicio.
 
 #### 1.4 Generar archivo de dependencias
 **Objetivo:** Documentar dependencias del proyecto
@@ -1102,10 +1309,12 @@ docker-compose down -v
 - `pydantic-settings` - Gestión de configuraciones
 - `python-dotenv` - Carga de variables de entorno
 
-### Dependencias de Desarrollo
+### Dependencias de Desarrollo (TDD)
 - `pytest` - Framework de testing
 - `httpx` - Cliente HTTP para tests
-- `pytest-cov` - Cobertura de tests (opcional)
+- `pytest-cov` - Cobertura de tests
+- `pytest-watch` - Auto-ejecutar tests al guardar archivos (TDD)
+- `pytest-mock` - Mocking para tests unitarios
 
 ### Para Agregar Después (Cuando sea necesario)
 - `passlib[bcrypt]` - Hashing de contraseñas (cuando agregues autenticación)
@@ -1162,13 +1371,21 @@ alembic downgrade -1
 
 ---
 
-## 📊 Criterios de Éxito (PoC Simplificado)
+## 📊 Criterios de Éxito (PoC Simplificado con TDD)
 
 ### Infraestructura
 - [ ] Entorno virtual configurado y funcionando con UV
-- [ ] Dependencias básicas instaladas (fastapi, uvicorn, sqlalchemy)
+- [ ] Dependencias de producción instaladas (fastapi, uvicorn, sqlalchemy)
+- [ ] Dependencias de testing instaladas (pytest, pytest-watch, pytest-mock)
 - [ ] Estructura Clean Architecture creada
 - [ ] Base de datos SQLite configurada
+- [ ] Archivos `.cursorrules` y `pytest.ini` creados
+
+### TDD Setup
+- [ ] `pytest.ini` configurado con markers (unit, integration, e2e)
+- [ ] `conftest.py` con fixtures básicos creado
+- [ ] `pytest` se ejecuta sin errores (aunque no haya tests aún)
+- [ ] `ptw` (pytest-watch) funciona en modo TDD
 
 ### Domain Layer
 - [ ] Entidad User implementada (user.py)
@@ -1203,10 +1420,14 @@ alembic downgrade -1
 - [ ] Eliminar usuario funciona
 - [ ] Logging visible en consola
 
-### Testing (Básico)
-- [ ] Tests unitarios de Use Cases
-- [ ] Tests e2e de endpoints
-- [ ] Tests pasan sin errores
+### Testing (TDD - Tests escritos ANTES del código)
+- [ ] Tests unitarios de entidad User (domain)
+- [ ] Tests unitarios de Use Cases (application)
+- [ ] Tests de integración de Repository (infrastructure)
+- [ ] Tests e2e de endpoints (presentation)
+- [ ] Todos los tests pasan (🟢 GREEN)
+- [ ] Cobertura de código > 80%
+- [ ] Cada funcionalidad implementada tiene test previo (TDD)
 
 ### Documentación
 - [ ] README actualizado
@@ -1443,4 +1664,6 @@ Este proyecto implementa una **Prueba de Concepto (PoC)** de CRUD de usuarios co
 ✅ **Tests básicos** (unit y e2e)  
 
 **Ideal para:** Prueba de concepto rápida con arquitectura extensible para agregar funcionalidades después.
+
+**📋 Cursor Rules:** Este proyecto incluye un archivo `.cursorrules` con reglas de desarrollo TDD y Clean Architecture. Las reglas se aplican automáticamente en Cursor AI.
 

@@ -1,0 +1,182 @@
+# Cursor Rules - Proyecto CRUD Usuarios con TDD
+
+## 🧪 Filosofía de Desarrollo: TDD (Test-Driven Development)
+
+### REGLA PRINCIPAL: Siempre escribir tests ANTES del código
+
+**Orden obligatorio para toda nueva funcionalidad:**
+
+1. 🔴 **RED:** Escribir el test que falla
+2. 🟢 **GREEN:** Escribir código mínimo para que pase
+3. 🔵 **REFACTOR:** Mejorar el código manteniendo tests verdes
+
+### Workflow TDD por Capas:
+
+#### Para implementar una nueva funcionalidad (ej: CreateUser):
+
+**Paso 1: Test Domain (Entidad)**
+```python
+# tests/unit/domain/test_user_entity.py
+def test_user_creation():
+    user = User(id=1, email="test@test.com", name="Test", age=25)
+    assert user.email == "test@test.com"
+```
+→ Luego implementar `app/domain/entities/user.py`
+
+**Paso 2: Test Application (Use Case)**
+```python
+# tests/unit/use_cases/test_create_user.py
+def test_create_user_use_case(mock_repository):
+    use_case = CreateUserUseCase(mock_repository)
+    user = use_case.execute("test@test.com", "Test", 25)
+    mock_repository.save.assert_called_once()
+```
+→ Luego implementar `app/application/use_cases/create_user.py`
+
+**Paso 3: Test Infrastructure (Repository)**
+```python
+# tests/integration/test_user_repository.py
+def test_repository_saves_user(db_session):
+    repo = UserRepositoryImpl(db_session)
+    user = User(None, "test@test.com", "Test", 25)
+    saved = repo.save(user)
+    assert saved.id is not None
+```
+→ Luego implementar `app/infrastructure/database/repositories/user_repository_impl.py`
+
+**Paso 4: Test Presentation (Endpoint)**
+```python
+# tests/e2e/test_user_endpoints.py
+def test_create_user_endpoint(client):
+    response = client.post("/api/v1/users/", json={
+        "email": "test@test.com", "name": "Test", "age": 25
+    })
+    assert response.status_code == 201
+```
+→ Luego implementar `app/presentation/api/v1/endpoints/users.py`
+
+---
+
+## 🏗️ Clean Architecture
+
+### Reglas de Dependencia:
+- ✅ Presentation → Application → Domain ← Infrastructure
+- ❌ Domain NUNCA depende de capas externas
+- ❌ Application NUNCA depende de Infrastructure o Presentation
+
+### Estructura de archivos:
+```
+app/
+├── domain/           # Entidades e interfaces (sin dependencias)
+├── application/      # Use Cases (casos de uso)
+├── infrastructure/   # Adaptadores (DB, servicios externos)
+└── presentation/     # API (FastAPI endpoints)
+```
+
+---
+
+## 📝 Convenciones de Código
+
+### Naming:
+- Entidades: `User`, `Product` (PascalCase)
+- Use Cases: `CreateUserUseCase`, `GetUserUseCase`
+- Repositorios: `UserRepository` (interfaz), `UserRepositoryImpl` (implementación)
+- Tests: `test_<what_it_does>`
+
+### Imports:
+- Usar imports absolutos: `from app.domain.entities.user import User`
+- No dejar imports sin usar
+- Ordenar imports: stdlib → third-party → local
+
+### Logging:
+- Usar logging exhaustivo en cada capa
+- Formato: `LOG.info("Use case: CreateUser - Starting for email=%s", email)`
+- Niveles: DEBUG (desarrollo), INFO (operaciones), WARNING (alertas), ERROR (errores)
+
+### Formato de código:
+- No abusar de saltos de línea (seguir ejemplo en user rules)
+- Mantener anotaciones compactas pero legibles
+- Máximo 100 caracteres por línea
+
+---
+
+## ✅ Tests
+
+### Organización de Tests:
+```
+tests/
+├── unit/          # Tests sin dependencias externas (rápidos)
+│   ├── domain/    # Tests de entidades
+│   └── use_cases/ # Tests de use cases (con mocks)
+├── integration/   # Tests con DB (en memoria)
+└── e2e/          # Tests de endpoints (servidor completo)
+```
+
+### Comandos:
+```bash
+pytest tests/ -v                    # Todos los tests
+pytest tests/unit/ -v               # Solo unitarios (rápidos)
+pytest tests/e2e/ -v                # Solo e2e
+pytest tests/ --cov=app             # Con cobertura
+ptw tests/                          # Watch mode (TDD)
+```
+
+### Cobertura mínima:
+- **Unit tests:** > 90% de domain y application
+- **Integration tests:** Repositorios completos
+- **E2E tests:** Happy paths de todos los endpoints
+
+---
+
+## 🚫 Prohibiciones
+
+### NO hacer:
+- ❌ Implementar código sin test previo
+- ❌ Commitear código con tests fallando
+- ❌ Domain con dependencias a frameworks
+- ❌ Lógica de negocio en controllers (presentation)
+- ❌ Dejar imports sin usar
+- ❌ Usar `print()` (usar logging)
+- ❌ Hardcodear valores (usar config o env vars)
+- ❌ Hacer queries SQL directos (usar ORM)
+
+### Siempre hacer:
+- ✅ Test primero (TDD)
+- ✅ Un test, un assert principal
+- ✅ Nombres descriptivos
+- ✅ Código simple y legible
+- ✅ Refactorizar con tests verdes
+- ✅ Logging en operaciones importantes
+
+---
+
+## 📋 Checklist antes de implementar una feature:
+
+- [ ] ¿Escribí el test primero? (🔴 RED)
+- [ ] ¿El test falla por la razón correcta?
+- [ ] ¿Escribí el código mínimo para pasar? (🟢 GREEN)
+- [ ] ¿Todos los tests pasan?
+- [ ] ¿Refactoricé mejorando el diseño? (🔵 REFACTOR)
+- [ ] ¿La cobertura se mantiene alta?
+- [ ] ¿El código sigue Clean Architecture?
+- [ ] ¿Agregué logging apropiado?
+- [ ] ¿Documenté con docstrings?
+- [ ] ¿No dejé imports sin usar?
+
+---
+
+## 🎯 Objetivo del Proyecto
+
+**PoC:** CRUD de usuarios sin autenticación, con Clean Architecture y TDD.
+
+**Futuro:** Agregar autenticación JWT, compliance, y otras features sin tocar código existente (gracias a Clean Architecture).
+
+---
+
+## 📚 Referencias
+
+- [Clean Architecture (Uncle Bob)](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html)
+- [TDD by Example (Kent Beck)](https://www.amazon.com/Test-Driven-Development-Kent-Beck/dp/0321146530)
+- [FastAPI Testing](https://fastapi.tiangolo.com/tutorial/testing/)
+- [Pytest Documentation](https://docs.pytest.org/)
+

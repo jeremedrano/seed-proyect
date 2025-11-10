@@ -59,6 +59,9 @@ coverage.xml
 .hypothesis/
 .cache
 nosetests.xml
+.pytest/
+*.pytest_cache
+coverage_html_report/
 
 # Database
 *.db
