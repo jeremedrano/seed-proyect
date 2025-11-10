@@ -961,7 +961,7 @@ pytest tests/test_users.py -v
 .\.venv\Scripts\Activate.ps1
 
 # Ejecutar con uvicorn
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+uvicorn app.presentation.api.v1.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
 **Resultado Esperado:**
@@ -1150,7 +1150,7 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD python -c "import requests; requests.get('http://localhost:8000/docs')"
 
 # Comando para ejecutar la aplicación
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "app.presentation.api.v1.main:app", "--host", "0.0.0.0", "--port", "8000"]
 ```
 
 #### 12.2 Crear docker-compose.yml
@@ -1345,10 +1345,10 @@ uv pip install --upgrade pip
 ### Desarrollo
 ```powershell
 # Ejecutar aplicación en modo desarrollo (auto-reload)
-uvicorn app.main:app --reload
+uvicorn app.presentation.api.v1.main:app --reload
 
 # Ejecutar en puerto específico
-uvicorn app.main:app --reload --port 8001
+uvicorn app.presentation.api.v1.main:app --reload --port 8001
 
 # Ejecutar tests
 pytest tests/ -v
@@ -1578,7 +1578,7 @@ uv pip install --only-binary :all: passlib[bcrypt]
 1. Usar PostgreSQL para desarrollo con múltiples workers
 2. O ejecutar con un solo worker:
 ```powershell
-uvicorn app.main:app --reload --workers 1
+uvicorn app.presentation.api.v1.main:app --reload --workers 1
 ```
 
 ---

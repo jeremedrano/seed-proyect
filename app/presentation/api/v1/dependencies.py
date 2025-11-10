@@ -3,6 +3,7 @@ Dependencias de FastAPI para inyección de dependencias.
 
 Estas funciones se usan con Depends() en los endpoints.
 """
+import logging
 from typing import Generator
 from fastapi import Depends
 from sqlalchemy import create_engine
@@ -10,8 +11,13 @@ from sqlalchemy.orm import sessionmaker, Session
 from app.infrastructure.database.repositories.user_repository_impl import UserRepositoryImpl
 from app.application.use_cases.create_user import CreateUserUseCase
 
+LOG = logging.getLogger(__name__)
+
 # TODO: Mover esto a config
 DATABASE_URL = "sqlite:///./users.db"
+
+LOG.info("Initializing database configuration...")
+LOG.info("  - Database URL: %s", DATABASE_URL)
 
 # Engine de SQLAlchemy (singleton)
 engine = create_engine(
@@ -19,8 +25,16 @@ engine = create_engine(
     connect_args={"check_same_thread": False}  # Solo para SQLite
 )
 
+LOG.info("✅ SQLAlchemy engine created successfully")
+LOG.info("  - Engine: %s", str(engine.url))
+LOG.info("  - Dialect: %s", engine.dialect.name)
+
 # SessionLocal factory
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+LOG.info("✅ SessionLocal factory configured")
+LOG.info("  - Autocommit: False")
+LOG.info("  - Autoflush: False")
 
 
 def get_db() -> Generator[Session, None, None]:
@@ -35,11 +49,15 @@ def get_db() -> Generator[Session, None, None]:
         def get_users(db: Session = Depends(get_db)):
             ...
     """
+    LOG.debug("Dependencies: Creating new database session")
     db = SessionLocal()
+    LOG.debug("Dependencies: Database session created (id: %s)", id(db))
     try:
         yield db
     finally:
+        LOG.debug("Dependencies: Closing database session (id: %s)", id(db))
         db.close()
+        LOG.debug("Dependencies: Database session closed")
 
 
 def get_user_repository(db: Session = Depends(get_db)) -> UserRepositoryImpl:
@@ -57,7 +75,10 @@ def get_user_repository(db: Session = Depends(get_db)) -> UserRepositoryImpl:
         def get_users(repo: UserRepositoryImpl = Depends(get_user_repository)):
             ...
     """
-    return UserRepositoryImpl(db)
+    LOG.debug("Dependencies: Creating UserRepositoryImpl instance")
+    repository = UserRepositoryImpl(db)
+    LOG.debug("Dependencies: UserRepositoryImpl created (id: %s)", id(repository))
+    return repository
 
 
 def get_create_user_use_case(
@@ -77,5 +98,8 @@ def get_create_user_use_case(
         def create_user(use_case: CreateUserUseCase = Depends(get_create_user_use_case)):
             ...
     """
-    return CreateUserUseCase(repository)
+    LOG.debug("Dependencies: Creating CreateUserUseCase instance")
+    use_case = CreateUserUseCase(repository)
+    LOG.debug("Dependencies: CreateUserUseCase created (id: %s)", id(use_case))
+    return use_case
 
