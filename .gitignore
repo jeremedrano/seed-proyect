@@ -1,3 +1,6 @@
+# Bitácora privada de IA (no subir a git)
+docs/changelog-ia/
+
 # Python
 __pycache__/
 *.py[cod]

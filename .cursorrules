@@ -173,6 +173,107 @@ ptw tests/                          # Watch mode (TDD)
 
 ---
 
+## 📝 Documentación del Proyecto
+
+### **Estructura de Documentación:**
+
+```
+docs/
+├── changelog/          # Historial oficial del proyecto (SE SUBE A GIT)
+│   ├── README.md
+│   └── YYYY-MM-DD_fase-N_descripcion.md
+│
+└── changelog-ia/       # Bitácora privada de IA (NO SE SUBE - ignorado en git)
+    └── notas-ia.md     # Decisiones, experimentos, notas temporales
+```
+
+### **docs/changelog/ - Documentación Oficial (SE SUBE A GIT)**
+
+**Propósito:** Historial oficial de desarrollo del proyecto.
+
+**Formato de archivos:**
+```
+docs/changelog/
+├── YYYY-MM-DD_fase-N_descripcion-corta.md
+└── YYYY-MM-DD_feature-nombre.md
+```
+
+### **Contenido requerido en cada changelog:**
+
+```markdown
+# Changelog - [Título de la Fase/Feature]
+
+**Fecha:** YYYY-MM-DD
+**Fase:** N - Nombre de la Fase
+**Estado:** ✅ COMPLETADA / 🚧 EN PROGRESO / ❌ FALLIDA
+
+## 🎯 Objetivo
+[Qué se quería lograr]
+
+## ✅ Cambios Realizados
+[Qué se hizo específicamente]
+
+## 📚 Aprendizajes
+[Qué se aprendió durante el desarrollo]
+
+## 🚧 Problemas Encontrados y Soluciones
+[Obstáculos y cómo se resolvieron]
+
+## 🎓 Mejoras Sugeridas
+[Qué se podría mejorar en el futuro]
+
+## 🚀 Próximos Pasos
+[Qué sigue después de esto]
+```
+
+### **Cuándo crear changelog oficial (docs/changelog/):**
+
+- ✅ Al completar cada fase del plan
+- ✅ Al implementar una feature importante
+- ✅ Al resolver un problema complejo que otros deben conocer
+- ✅ Antes de commits importantes
+- ✅ Cuando hay decisiones técnicas que impactan el proyecto
+
+### **docs/changelog-ia/ - Bitácora Privada (NO SE SUBE)**
+
+**Propósito:** Notas privadas de IA, experimentos, decisiones temporales.
+
+**Cuándo usar:**
+- 🔸 Notas de sesión de desarrollo con IA
+- 🔸 Experimentos que no funcionaron (pero aprendiste algo)
+- 🔸 Decisiones temporales a revisar después
+- 🔸 Pensamientos en voz alta durante desarrollo
+- 🔸 Contexto que la IA necesita entre sesiones pero no es documentación oficial
+
+**Formato libre:** Puede ser menos formal que el changelog oficial.
+
+### **Ejemplo de uso:**
+
+```markdown
+# Changelog - Fase 2: Estructura Base del Proyecto
+
+**Fecha:** 2025-11-10
+**Estado:** ✅ COMPLETADA
+
+## ✅ Cambios Realizados
+- Creada estructura de directorios de Clean Architecture
+- Creados todos los __init__.py
+- Configurado conftest.py con fixtures básicos
+
+## 📚 Aprendizajes
+- PowerShell requiere `-Force` para crear directorios anidados
+- pytest encuentra tests automáticamente con convención test_*.py
+```
+
+### **Beneficios:**
+
+1. **Contexto preservado:** La IA recuerda decisiones pasadas
+2. **Aprendizajes documentados:** No repetir errores
+3. **Historial de desarrollo:** Trazabilidad del proyecto
+4. **Onboarding rápido:** Nuevas IAs entienden el proyecto rápidamente
+
+---
+
 ## 📚 Referencias
 
 - [Clean Architecture (Uncle Bob)](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html)
