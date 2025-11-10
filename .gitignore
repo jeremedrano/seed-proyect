@@ -1,0 +1,133 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environment
+.venv/
+venv/
+ENV/
+env/
+.virtualenv/
+
+# Environment Variables (CRÍTICO - No subir credenciales)
+.env
+.env.*
+!.env.example
+.envrc
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+*.code-workspace
+.project
+.pydevproject
+.settings/
+
+# Testing
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+coverage.xml
+*.cover
+.hypothesis/
+.cache
+nosetests.xml
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+app.db
+*.db-journal
+
+# Logs
+*.log
+logs/
+*.log.*
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb
+
+# FastAPI / Uvicorn
+*.pid
+
+# Docker
+docker-compose.override.yml
+.dockerignore.local
+
+# OS
+Thumbs.db
+.DS_Store
+*.bak
+*.tmp
+*.temp
+
+# Alembic (migrations)
+# Descomentar si NO quieres versionar las migraciones
+# alembic/versions/*.py
+
+# Security / Credentials
+*.pem
+*.key
+*.crt
+*.p12
+secrets/
+credentials/
+
+# Backup files
+*.backup
+*.bak
+*~
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# pytype static type analyzer
+.pytype/
+
+# Cython debug symbols
+cython_debug/
+
+# Distribution / packaging
+*.whl
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+.pytest_cache/
+*.cover
+*.py,cover
+
