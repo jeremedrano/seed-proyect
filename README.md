@@ -23,6 +23,41 @@ Desarrollo de una **Prueba de Concepto (PoC)** de API REST con operaciones **CRU
 
 ---
 
+## 🚀 Endpoints Implementados (PoC Actual)
+
+### **CRUD Completo - API REST de Usuarios**
+
+| Método | Endpoint | Descripción | Status Codes | Documentado |
+|--------|----------|-------------|--------------|-------------|
+| **POST** | `/api/v1/users/` | Crear nuevo usuario | 201, 400, 422, 500 | ✅ |
+| **GET** | `/api/v1/users/{id}` | Obtener usuario por ID | 200, 400, 404, 500 | ✅ |
+| **GET** | `/api/v1/users/` | Listar todos (paginado) | 200, 400, 500 | ✅ |
+| **PUT** | `/api/v1/users/{id}` | Actualizar usuario | 200, 400, 404, 500 | ✅ |
+| **DELETE** | `/api/v1/users/{id}` | Eliminar usuario | 204, 400, 404, 500 | ✅ |
+
+### **Documentación Interactiva:**
+- **Swagger UI:** `http://localhost:8000/api/v1/docs`
+- **ReDoc:** `http://localhost:8000/api/v1/redoc`
+- **OpenAPI JSON:** `http://localhost:8000/api/v1/openapi.json`
+
+### **Características Implementadas:**
+✅ Validaciones con Pydantic (email, edad, nombre)  
+✅ Logs exhaustivos en todas las capas  
+✅ Paginación en listado (skip/limit)  
+✅ Actualización parcial (campos opcionales)  
+✅ Manejo de errores HTTP apropiados  
+✅ Tests unitarios (41 tests)  
+✅ Tests de integración (12 tests)  
+✅ Clean Architecture completa  
+
+### **Testing Manual:**
+Ver documentos detallados:
+- [`docs/QUICK_START_TESTING.md`](docs/QUICK_START_TESTING.md) - Guía rápida
+- [`docs/MANUAL_TESTING.md`](docs/MANUAL_TESTING.md) - Guía completa
+- [`docs/test_commands.ps1`](docs/test_commands.ps1) - Script automatizado
+
+---
+
 ## 📐 Arquitectura Propuesta: Clean Architecture Simplificada
 
 Clean Architecture **simplificada para PoC**, manteniendo extensibilidad para el futuro.

@@ -113,6 +113,92 @@ curl -X POST http://localhost:8000/api/v1/users/ `
 
 ---
 
+## 📖 2. Test READ (GET) - Obtener Usuarios
+
+### ✅ **Obtener usuario por ID**
+```powershell
+curl -X GET http://localhost:8000/api/v1/users/1
+```
+**Esperar:** 200 OK con datos del usuario
+
+### ✅ **Listar todos los usuarios (paginado)**
+```powershell
+curl -X GET "http://localhost:8000/api/v1/users/?skip=0&limit=10"
+```
+**Esperar:** 200 OK con lista de usuarios
+
+### ❌ **Usuario no existe**
+```powershell
+curl -X GET http://localhost:8000/api/v1/users/999
+```
+**Esperar:** 404 Not Found
+
+---
+
+## ✏️ 3. Test UPDATE (PUT) - Actualizar Usuario
+
+### ✅ **Actualizar todos los campos**
+```powershell
+curl -X PUT http://localhost:8000/api/v1/users/1 `
+  -H "Content-Type: application/json" `
+  -d '{"email":"updated@example.com","name":"Updated Name","age":30}'
+```
+**Esperar:** 200 OK con datos actualizados
+
+### ✅ **Actualización parcial (solo nombre)**
+```powershell
+curl -X PUT http://localhost:8000/api/v1/users/1 `
+  -H "Content-Type: application/json" `
+  -d '{"name":"Nombre Actualizado"}'
+```
+**Esperar:** 200 OK con nombre actualizado
+
+### ❌ **Email duplicado**
+```powershell
+# Crear segundo usuario
+curl -X POST http://localhost:8000/api/v1/users/ `
+  -H "Content-Type: application/json" `
+  -d '{"email":"otro@example.com","name":"Otro Usuario","age":25}'
+
+# Intentar actualizar user 1 con email de user 2
+curl -X PUT http://localhost:8000/api/v1/users/1 `
+  -H "Content-Type: application/json" `
+  -d '{"email":"otro@example.com"}'
+```
+**Esperar:** 400 Bad Request (Email already exists)
+
+### ❌ **Usuario no existe**
+```powershell
+curl -X PUT http://localhost:8000/api/v1/users/999 `
+  -H "Content-Type: application/json" `
+  -d '{"name":"No Existe"}'
+```
+**Esperar:** 404 Not Found
+
+---
+
+## 🗑️ 4. Test DELETE - Eliminar Usuario
+
+### ✅ **Eliminar usuario existente**
+```powershell
+curl -X DELETE http://localhost:8000/api/v1/users/1
+```
+**Esperar:** 204 No Content (sin body)
+
+### ❌ **Eliminar usuario inexistente**
+```powershell
+curl -X DELETE http://localhost:8000/api/v1/users/999
+```
+**Esperar:** 404 Not Found
+
+### 🔍 **Verificar eliminación**
+```powershell
+curl -X GET http://localhost:8000/api/v1/users/1
+```
+**Esperar:** 404 Not Found (usuario eliminado)
+
+---
+
 ## 🔍 Verificar Base de Datos
 
 ```powershell

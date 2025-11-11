@@ -421,9 +421,438 @@ curl -X POST http://localhost:8000/api/v1/users/ `
 
 ---
 
-## 🗄️ Paso 5: Verificar Base de Datos
+## 📖 Paso 5: Pruebas de Lectura (GET)
 
-### **5.1 Ubicar el archivo de base de datos**
+### **5.1 Obtener Usuario por ID (GET /api/v1/users/{id})**
+
+**Objetivo:** Verificar que se puede obtener un usuario específico por su ID.
+
+**Request:**
+```powershell
+curl -X GET http://localhost:8000/api/v1/users/1
+```
+
+**Resultado esperado:**
+```json
+{
+  "id": 1,
+  "email": "juan.perez@example.com",
+  "name": "Juan Pérez",
+  "age": 30
+}
+```
+
+**Verificar:**
+- ✅ Status Code: `200 OK`
+- ✅ Response contiene los datos correctos del usuario
+- ✅ ID coincide con el solicitado
+
+✅ **Test Passed**
+
+---
+
+### **5.2 Listar Todos los Usuarios (GET /api/v1/users/)**
+
+**Objetivo:** Verificar que se puede obtener lista de usuarios con paginación.
+
+**Request:**
+```powershell
+curl -X GET "http://localhost:8000/api/v1/users/?skip=0&limit=10"
+```
+
+**Resultado esperado:**
+```json
+{
+  "users": [
+    {
+      "id": 1,
+      "email": "juan.perez@example.com",
+      "name": "Juan Pérez",
+      "age": 30
+    },
+    {
+      "id": 2,
+      "email": "maria.garcia@example.com",
+      "name": "María García",
+      "age": 25
+    }
+  ],
+  "total": 2,
+  "skip": 0,
+  "limit": 10
+}
+```
+
+**Verificar:**
+- ✅ Status Code: `200 OK`
+- ✅ Array `users` contiene los usuarios creados
+- ✅ Metadatos `total`, `skip`, `limit` presentes
+
+✅ **Test Passed**
+
+---
+
+### **5.3 Paginación (skip y limit)**
+
+**Request:**
+```powershell
+curl -X GET "http://localhost:8000/api/v1/users/?skip=1&limit=1"
+```
+
+**Resultado esperado:**
+```json
+{
+  "users": [
+    {
+      "id": 2,
+      "email": "maria.garcia@example.com",
+      "name": "María García",
+      "age": 25
+    }
+  ],
+  "total": 1,
+  "skip": 1,
+  "limit": 1
+}
+```
+
+**Verificar:**
+- ✅ Solo retorna 1 usuario (limit=1)
+- ✅ Usuario retornado es el segundo (skip=1)
+
+✅ **Test Passed**
+
+---
+
+### **5.4 Usuario No Existe (GET /api/v1/users/{id})**
+
+**Request:**
+```powershell
+curl -X GET http://localhost:8000/api/v1/users/999
+```
+
+**Resultado esperado:**
+- **Status Code:** `404 Not Found`
+```json
+{
+  "detail": "User with ID 999 not found"
+}
+```
+
+**Verificar:**
+- ✅ Status 404
+- ✅ Mensaje de error apropiado
+
+✅ **Test Passed**
+
+---
+
+### **5.5 ID Inválido (ID negativo)**
+
+**Request:**
+```powershell
+curl -X GET http://localhost:8000/api/v1/users/-1
+```
+
+**Resultado esperado:**
+- **Status Code:** `400 Bad Request`
+```json
+{
+  "detail": "User ID must be positive"
+}
+```
+
+✅ **Test Passed**
+
+---
+
+## ✏️ Paso 6: Pruebas de Actualización (PUT /api/v1/users/{id})
+
+### **6.1 Actualizar Todos los Campos**
+
+**Objetivo:** Verificar que se puede actualizar completamente un usuario.
+
+**Request:**
+```powershell
+curl -X PUT http://localhost:8000/api/v1/users/1 `
+  -H "Content-Type: application/json" `
+  -d '{
+    "email": "juan.actualizado@example.com",
+    "name": "Juan Actualizado",
+    "age": 31
+  }'
+```
+
+**Resultado esperado:**
+```json
+{
+  "id": 1,
+  "email": "juan.actualizado@example.com",
+  "name": "Juan Actualizado",
+  "age": 31
+}
+```
+
+**Verificar:**
+- ✅ Status Code: `200 OK`
+- ✅ Todos los campos actualizados
+- ✅ ID permanece igual (1)
+
+✅ **Test Passed**
+
+---
+
+### **6.2 Actualización Parcial (solo nombre)**
+
+**Objetivo:** Verificar que se puede actualizar solo algunos campos.
+
+**Request:**
+```powershell
+curl -X PUT http://localhost:8000/api/v1/users/2 `
+  -H "Content-Type: application/json" `
+  -d '{
+    "name": "María García Actualizada"
+  }'
+```
+
+**Resultado esperado:**
+```json
+{
+  "id": 2,
+  "email": "maria.garcia@example.com",
+  "name": "María García Actualizada",
+  "age": 25
+}
+```
+
+**Verificar:**
+- ✅ Status Code: `200 OK`
+- ✅ Solo el nombre cambió
+- ✅ Email y edad permanecen iguales
+
+✅ **Test Passed**
+
+---
+
+### **6.3 Actualización Parcial (solo edad)**
+
+**Request:**
+```powershell
+curl -X PUT http://localhost:8000/api/v1/users/2 `
+  -H "Content-Type: application/json" `
+  -d '{
+    "age": 26
+  }'
+```
+
+**Resultado esperado:**
+```json
+{
+  "id": 2,
+  "email": "maria.garcia@example.com",
+  "name": "María García Actualizada",
+  "age": 26
+}
+```
+
+✅ **Test Passed**
+
+---
+
+### **6.4 Email Duplicado (Error)**
+
+**Objetivo:** Verificar que no se puede usar un email ya en uso.
+
+**Request:**
+```powershell
+curl -X PUT http://localhost:8000/api/v1/users/1 `
+  -H "Content-Type: application/json" `
+  -d '{
+    "email": "maria.garcia@example.com"
+  }'
+```
+
+**Resultado esperado:**
+- **Status Code:** `400 Bad Request`
+```json
+{
+  "detail": "Email already exists"
+}
+```
+
+**Verificar:**
+- ✅ Status 400
+- ✅ No se permite email duplicado
+
+✅ **Test Passed**
+
+---
+
+### **6.5 Usuario No Existe (Error)**
+
+**Request:**
+```powershell
+curl -X PUT http://localhost:8000/api/v1/users/999 `
+  -H "Content-Type: application/json" `
+  -d '{
+    "name": "No Existe"
+  }'
+```
+
+**Resultado esperado:**
+- **Status Code:** `404 Not Found`
+```json
+{
+  "detail": "User with ID 999 not found"
+}
+```
+
+✅ **Test Passed**
+
+---
+
+### **6.6 Email Inválido (Error)**
+
+**Request:**
+```powershell
+curl -X PUT http://localhost:8000/api/v1/users/1 `
+  -H "Content-Type: application/json" `
+  -d '{
+    "email": "email-sin-arroba"
+  }'
+```
+
+**Resultado esperado:**
+- **Status Code:** `422 Unprocessable Entity`
+
+✅ **Test Passed**
+
+---
+
+### **6.7 Sin Campos para Actualizar (Error)**
+
+**Request:**
+```powershell
+curl -X PUT http://localhost:8000/api/v1/users/1 `
+  -H "Content-Type: application/json" `
+  -d '{}'
+```
+
+**Resultado esperado:**
+- **Status Code:** `400 Bad Request`
+```json
+{
+  "detail": "At least one field must be provided for update"
+}
+```
+
+✅ **Test Passed**
+
+---
+
+## 🗑️ Paso 7: Pruebas de Eliminación (DELETE /api/v1/users/{id})
+
+### **7.1 Eliminar Usuario Existente**
+
+**Objetivo:** Verificar que se puede eliminar un usuario.
+
+**Request:**
+```powershell
+curl -X DELETE http://localhost:8000/api/v1/users/3
+```
+
+**Resultado esperado:**
+- **Status Code:** `204 No Content`
+- **Body:** (vacío - sin contenido)
+
+**Verificar:**
+- ✅ Status 204
+- ✅ No retorna body
+
+✅ **Test Passed**
+
+---
+
+### **7.2 Verificar Eliminación (GET debe retornar 404)**
+
+**Request:**
+```powershell
+curl -X GET http://localhost:8000/api/v1/users/3
+```
+
+**Resultado esperado:**
+- **Status Code:** `404 Not Found`
+```json
+{
+  "detail": "User with ID 3 not found"
+}
+```
+
+**Verificar:**
+- ✅ Usuario eliminado no se encuentra
+
+✅ **Test Passed**
+
+---
+
+### **7.3 Eliminar Usuario Inexistente (Error)**
+
+**Request:**
+```powershell
+curl -X DELETE http://localhost:8000/api/v1/users/999
+```
+
+**Resultado esperado:**
+- **Status Code:** `404 Not Found`
+```json
+{
+  "detail": "User with ID 999 not found"
+}
+```
+
+✅ **Test Passed**
+
+---
+
+### **7.4 ID Inválido (Error)**
+
+**Request:**
+```powershell
+curl -X DELETE http://localhost:8000/api/v1/users/0
+```
+
+**Resultado esperado:**
+- **Status Code:** `400 Bad Request`
+```json
+{
+  "detail": "User ID must be positive"
+}
+```
+
+✅ **Test Passed**
+
+---
+
+### **7.5 Verificar Lista Actualizada**
+
+**Objetivo:** Confirmar que el usuario eliminado no aparece en la lista.
+
+**Request:**
+```powershell
+curl -X GET "http://localhost:8000/api/v1/users/"
+```
+
+**Resultado esperado:**
+- Lista de usuarios SIN el usuario ID 3
+- Solo usuarios 1, 2, 4, 5, etc.
+
+✅ **Test Passed**
+
+---
+
+## 🗄️ Paso 8: Verificar Base de Datos
+
+### **8.1 Ubicar el archivo de base de datos**
 
 La aplicación crea un archivo SQLite:
 
@@ -442,7 +871,7 @@ Mode                 LastWriteTime         Length Name
 
 ---
 
-### **5.2 Inspeccionar la base de datos (Opcional)**
+### **8.2 Inspeccionar la base de datos (Opcional)**
 
 Si tienes **DB Browser for SQLite** o similar:
 
@@ -464,7 +893,7 @@ Si tienes **DB Browser for SQLite** o similar:
 
 ---
 
-### **5.3 Verificar con SQLite CLI (Alternativa)**
+### **8.3 Verificar con SQLite CLI (Alternativa)**
 
 ```powershell
 # Instalar sqlite3 si no lo tienes
@@ -484,15 +913,15 @@ sqlite3 users.db "SELECT * FROM users;"
 
 ---
 
-## 🧪 Paso 6: Probar desde Swagger UI
+## 🧪 Paso 9: Probar desde Swagger UI
 
-### **6.1 Abrir Swagger UI**
+### **9.1 Abrir Swagger UI**
 
 ```
 http://localhost:8000/api/v1/docs
 ```
 
-### **6.2 Crear usuario desde la interfaz**
+### **9.2 Crear usuario desde la interfaz**
 
 1. **Expandir** `POST /api/v1/users/`
 2. **Click** en "Try it out"
@@ -510,7 +939,7 @@ http://localhost:8000/api/v1/docs
 - **Response code:** `201`
 - **Response body:** Usuario con ID asignado
 
-### **6.3 Probar validación desde Swagger**
+### **9.3 Probar validación desde Swagger**
 
 **Request con email inválido:**
 ```json
@@ -531,16 +960,16 @@ http://localhost:8000/api/v1/docs
 
 ---
 
-## 📊 Paso 7: Ejecutar Tests Automatizados
+## 📊 Paso 10: Ejecutar Tests Automatizados
 
-### **7.1 Abrir nueva terminal (dejar servidor corriendo)**
+### **10.1 Abrir nueva terminal (dejar servidor corriendo)**
 
 ```powershell
 cd C:\workspace\seed-proyect
 .\.venv\Scripts\Activate.ps1
 ```
 
-### **7.2 Ejecutar todos los tests**
+### **10.2 Ejecutar todos los tests**
 
 ```powershell
 pytest tests/ -v
@@ -548,42 +977,42 @@ pytest tests/ -v
 
 **Resultado esperado:**
 ```
-======================== 34 passed, 3 skipped in X.XXs ========================
+======================== 53 passed, 3 skipped in X.XXs ========================
 ```
 
 **Verificar:**
-- ✅ 18 tests unitarios pasando
+- ✅ 41 tests unitarios pasando
 - ✅ 12 tests de integración pasando
 - ✅ 4 tests E2E pasando
 - ✅ 3 tests E2E skippeados (documentados)
 
-### **7.3 Tests con cobertura**
+### **10.3 Tests con cobertura**
 
 ```powershell
 pytest tests/ --cov=app --cov-report=term-missing
 ```
 
 **Resultado esperado:**
-- **Coverage:** ~92%
+- **Coverage:** > 90%
 - **Missing lines:** Muy pocas
 
 ✅ **Test Passed**
 
 ---
 
-## 🔄 Paso 8: Reiniciar y Verificar Persistencia
+## 🔄 Paso 11: Reiniciar y Verificar Persistencia
 
-### **8.1 Detener servidor**
+### **11.1 Detener servidor**
 
 En la terminal del servidor: `CTRL + C`
 
-### **8.2 Reiniciar servidor**
+### **11.2 Reiniciar servidor**
 
 ```powershell
 uvicorn app.presentation.api.v1.main:app --reload
 ```
 
-### **8.3 Verificar que usuarios siguen existiendo**
+### **11.3 Verificar que usuarios siguen existiendo**
 
 **Request:**
 ```powershell
