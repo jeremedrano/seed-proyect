@@ -5,7 +5,7 @@ Estos schemas se usan para validación HTTP (request/response).
 NO son entidades de dominio, son DTOs de la capa de presentación.
 """
 from pydantic import BaseModel, EmailStr, Field
-from typing import Optional
+from typing import Optional, List
 
 
 class UserCreateRequest(BaseModel):
@@ -80,6 +80,48 @@ class UserUpdateRequest(BaseModel):
                 {
                     "name": "Jane Doe",
                     "age": 31
+                }
+            ]
+        }
+    }
+
+
+class UserListResponse(BaseModel):
+    """
+    Schema para respuesta de lista de usuarios con metadatos de paginación.
+    
+    Attributes:
+        users: Lista de usuarios
+        total: Número total de usuarios retornados
+        skip: Offset usado en la paginación
+        limit: Límite usado en la paginación
+    """
+    users: List[UserResponse]
+    total: int = Field(..., description="Número de usuarios en esta página")
+    skip: int = Field(..., description="Offset de paginación")
+    limit: int = Field(..., description="Límite de paginación")
+    
+    model_config = {
+        "json_schema_extra": {
+            "examples": [
+                {
+                    "users": [
+                        {
+                            "id": 1,
+                            "email": "user1@example.com",
+                            "name": "User 1",
+                            "age": 25
+                        },
+                        {
+                            "id": 2,
+                            "email": "user2@example.com",
+                            "name": "User 2",
+                            "age": 30
+                        }
+                    ],
+                    "total": 2,
+                    "skip": 0,
+                    "limit": 100
                 }
             ]
         }

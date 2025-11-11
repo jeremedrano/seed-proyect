@@ -10,6 +10,8 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
 from app.infrastructure.database.repositories.user_repository_impl import UserRepositoryImpl
 from app.application.use_cases.create_user import CreateUserUseCase
+from app.application.use_cases.get_user import GetUserUseCase
+from app.application.use_cases.get_all_users import GetAllUsersUseCase
 
 LOG = logging.getLogger(__name__)
 
@@ -101,5 +103,51 @@ def get_create_user_use_case(
     LOG.debug("Dependencies: Creating CreateUserUseCase instance")
     use_case = CreateUserUseCase(repository)
     LOG.debug("Dependencies: CreateUserUseCase created (id: %s)", id(use_case))
+    return use_case
+
+
+def get_get_user_use_case(
+    repository: UserRepositoryImpl = Depends(get_user_repository)
+) -> GetUserUseCase:
+    """
+    Dependencia que provee el caso de uso GetUser.
+    
+    Args:
+        repository: Repositorio de usuarios (inyectado automáticamente)
+        
+    Returns:
+        GetUserUseCase: Instancia del caso de uso
+        
+    Usage:
+        @app.get("/users/{user_id}")
+        def get_user(use_case: GetUserUseCase = Depends(get_get_user_use_case)):
+            ...
+    """
+    LOG.debug("Dependencies: Creating GetUserUseCase instance")
+    use_case = GetUserUseCase(repository)
+    LOG.debug("Dependencies: GetUserUseCase created (id: %s)", id(use_case))
+    return use_case
+
+
+def get_get_all_users_use_case(
+    repository: UserRepositoryImpl = Depends(get_user_repository)
+) -> GetAllUsersUseCase:
+    """
+    Dependencia que provee el caso de uso GetAllUsers.
+    
+    Args:
+        repository: Repositorio de usuarios (inyectado automáticamente)
+        
+    Returns:
+        GetAllUsersUseCase: Instancia del caso de uso
+        
+    Usage:
+        @app.get("/users/")
+        def get_all_users(use_case: GetAllUsersUseCase = Depends(get_get_all_users_use_case)):
+            ...
+    """
+    LOG.debug("Dependencies: Creating GetAllUsersUseCase instance")
+    use_case = GetAllUsersUseCase(repository)
+    LOG.debug("Dependencies: GetAllUsersUseCase created (id: %s)", id(use_case))
     return use_case
 

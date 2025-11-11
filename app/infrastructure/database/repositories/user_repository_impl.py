@@ -132,18 +132,22 @@ class UserRepositoryImpl(UserRepository):
         LOG.info("  - Age: %s", user_model.age)
         return self._to_entity(user_model)
     
-    def get_all(self) -> List[User]:
+    def get_all(self, skip: int = 0, limit: int = 100) -> List[User]:
         """
-        Obtiene todos los usuarios del sistema.
+        Obtiene todos los usuarios del sistema con paginación.
+        
+        Args:
+            skip: Número de registros a saltar (default: 0)
+            limit: Número máximo de registros a retornar (default: 100)
         
         Returns:
-            List[User]: Lista de todos los usuarios (vacía si no hay usuarios)
+            List[User]: Lista de usuarios (vacía si no hay usuarios)
         """
-        LOG.debug("Repository: Getting all users")
+        LOG.info("Repository: get_all() - Fetching users (skip=%d, limit=%d)", skip, limit)
         
-        user_models = self.session.query(UserModel).all()
+        user_models = self.session.query(UserModel).offset(skip).limit(limit).all()
         
-        LOG.debug("Repository: Found %d users", len(user_models))
+        LOG.info("Repository: get_all() - Found %d users", len(user_models))
         
         return [self._to_entity(model) for model in user_models]
     

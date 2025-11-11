@@ -57,12 +57,16 @@ class UserRepository(ABC):
         pass
     
     @abstractmethod
-    def get_all(self) -> List[User]:
+    def get_all(self, skip: int = 0, limit: int = 100) -> List[User]:
         """
-        Obtiene todos los usuarios del sistema.
+        Obtiene todos los usuarios del sistema con paginación.
+        
+        Args:
+            skip: Número de registros a saltar (default: 0)
+            limit: Número máximo de registros a retornar (default: 100)
         
         Returns:
-            List[User]: Lista de todos los usuarios (vacía si no hay usuarios)
+            List[User]: Lista de usuarios (vacía si no hay usuarios)
         """
         pass
     
