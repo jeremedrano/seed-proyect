@@ -9,11 +9,15 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query
 from app.application.use_cases.create_user import CreateUserUseCase
 from app.application.use_cases.get_user import GetUserUseCase
 from app.application.use_cases.get_all_users import GetAllUsersUseCase
-from app.presentation.schemas.user_schema import UserCreateRequest, UserResponse, UserListResponse
+from app.application.use_cases.update_user import UpdateUserUseCase
+from app.application.use_cases.delete_user import DeleteUserUseCase
+from app.presentation.schemas.user_schema import UserCreateRequest, UserResponse, UserListResponse, UserUpdateRequest
 from app.presentation.api.v1.dependencies import (
     get_create_user_use_case,
     get_get_user_use_case,
-    get_get_all_users_use_case
+    get_get_all_users_use_case,
+    get_update_user_use_case,
+    get_delete_user_use_case
 )
 
 LOG = logging.getLogger(__name__)
@@ -310,6 +314,210 @@ def get_all_users(
         LOG.error("Unexpected error: %s", str(e), exc_info=True)
         LOG.error("  - skip: %d", skip)
         LOG.error("  - limit: %d", limit)
+        LOG.error("Returning HTTP 500 Internal Server Error")
+        LOG.error("="*60)
+        
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Internal server error"
+        )
+
+
+@router.put(
+    "/{user_id}",
+    response_model=UserResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Actualizar un usuario",
+    description="Actualiza los datos de un usuario existente. Todos los campos son opcionales."
+)
+def update_user(
+    user_id: int,
+    user_data: UserUpdateRequest,
+    use_case: UpdateUserUseCase = Depends(get_update_user_use_case)
+) -> UserResponse:
+    """
+    Endpoint para actualizar un usuario existente.
+    
+    Args:
+        user_id: ID del usuario a actualizar
+        user_data: Datos a actualizar (todos opcionales)
+        use_case: Caso de uso UpdateUser (inyectado)
+        
+    Returns:
+        UserResponse: Usuario actualizado
+        
+    Raises:
+        HTTPException 400: Si los datos son inválidos
+        HTTPException 404: Si el usuario no existe
+    """
+    LOG.info("="*60)
+    LOG.info("Endpoint: PUT /api/v1/users/%d - START", user_id)
+    LOG.info("="*60)
+    LOG.info("Path parameter:")
+    LOG.info("  - user_id: %d", user_id)
+    LOG.info("Request body:")
+    LOG.info("  - email: %s", user_data.email if user_data.email else "(not provided)")
+    LOG.info("  - name: %s", user_data.name if user_data.name else "(not provided)")
+    LOG.info("  - age: %s", user_data.age if user_data.age is not None else "(not provided)")
+    
+    try:
+        # Ejecutar caso de uso
+        LOG.info("Endpoint: Calling UpdateUserUseCase.execute()...")
+        user = use_case.execute(
+            user_id=user_id,
+            email=user_data.email,
+            name=user_data.name,
+            age=user_data.age
+        )
+        
+        LOG.info("Endpoint: UpdateUserUseCase completed successfully")
+        LOG.info("  - Updated user ID: %s", user.id)
+        LOG.info("  - Email: %s", user.email)
+        LOG.info("  - Name: %s", user.name)
+        LOG.info("  - Age: %s", user.age)
+        
+        # Convertir entidad de dominio a schema de respuesta
+        response = UserResponse(
+            id=user.id,
+            email=user.email,
+            name=user.name,
+            age=user.age
+        )
+        
+        LOG.info("Endpoint: Returning UserResponse")
+        LOG.info("="*60)
+        LOG.info("Endpoint: PUT /api/v1/users/%d - SUCCESS (200)", user_id)
+        LOG.info("="*60)
+        
+        return response
+        
+    except ValueError as e:
+        # Errores de validación del use case
+        error_message = str(e)
+        LOG.warning("="*60)
+        
+        if "not found" in error_message.lower():
+            LOG.warning("Endpoint: PUT /api/v1/users/%d - NOT FOUND", user_id)
+            LOG.warning("="*60)
+            LOG.warning("User not found: %s", error_message)
+            LOG.warning("Returning HTTP 404 Not Found")
+            LOG.warning("="*60)
+            
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=error_message
+            )
+        else:
+            LOG.warning("Endpoint: PUT /api/v1/users/%d - VALIDATION ERROR", user_id)
+            LOG.warning("="*60)
+            LOG.warning("Validation error: %s", error_message)
+            LOG.warning("  - email: %s", user_data.email if user_data.email else "(not provided)")
+            LOG.warning("  - name: %s", user_data.name if user_data.name else "(not provided)")
+            LOG.warning("  - age: %s", user_data.age if user_data.age is not None else "(not provided)")
+            LOG.warning("Returning HTTP 400 Bad Request")
+            LOG.warning("="*60)
+            
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=error_message
+            )
+    except Exception as e:
+        # Errores inesperados
+        LOG.error("="*60)
+        LOG.error("Endpoint: PUT /api/v1/users/%d - INTERNAL ERROR", user_id)
+        LOG.error("="*60)
+        LOG.error("Unexpected error: %s", str(e), exc_info=True)
+        LOG.error("  - user_id: %d", user_id)
+        LOG.error("  - email: %s", user_data.email if user_data.email else "(not provided)")
+        LOG.error("  - name: %s", user_data.name if user_data.name else "(not provided)")
+        LOG.error("  - age: %s", user_data.age if user_data.age is not None else "(not provided)")
+        LOG.error("Returning HTTP 500 Internal Server Error")
+        LOG.error("="*60)
+        
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Internal server error"
+        )
+
+
+@router.delete(
+    "/{user_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Eliminar un usuario",
+    description="Elimina un usuario existente del sistema."
+)
+def delete_user(
+    user_id: int,
+    use_case: DeleteUserUseCase = Depends(get_delete_user_use_case)
+):
+    """
+    Endpoint para eliminar un usuario existente.
+    
+    Args:
+        user_id: ID del usuario a eliminar
+        use_case: Caso de uso DeleteUser (inyectado)
+        
+    Returns:
+        None: 204 No Content si se elimina exitosamente
+        
+    Raises:
+        HTTPException 400: Si el ID es inválido
+        HTTPException 404: Si el usuario no existe
+    """
+    LOG.info("="*60)
+    LOG.info("Endpoint: DELETE /api/v1/users/%d - START", user_id)
+    LOG.info("="*60)
+    LOG.info("Path parameter:")
+    LOG.info("  - user_id: %d", user_id)
+    
+    try:
+        # Ejecutar caso de uso
+        LOG.info("Endpoint: Calling DeleteUserUseCase.execute()...")
+        use_case.execute(user_id=user_id)
+        
+        LOG.info("Endpoint: DeleteUserUseCase completed successfully")
+        LOG.info("  - Deleted user ID: %d", user_id)
+        LOG.info("="*60)
+        LOG.info("Endpoint: DELETE /api/v1/users/%d - SUCCESS (204)", user_id)
+        LOG.info("="*60)
+        
+        # DELETE retorna 204 No Content (sin body)
+        return None
+        
+    except ValueError as e:
+        # Errores de validación del use case
+        error_message = str(e)
+        LOG.warning("="*60)
+        
+        if "not found" in error_message.lower():
+            LOG.warning("Endpoint: DELETE /api/v1/users/%d - NOT FOUND", user_id)
+            LOG.warning("="*60)
+            LOG.warning("User not found: %s", error_message)
+            LOG.warning("Returning HTTP 404 Not Found")
+            LOG.warning("="*60)
+            
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=error_message
+            )
+        else:
+            LOG.warning("Endpoint: DELETE /api/v1/users/%d - VALIDATION ERROR", user_id)
+            LOG.warning("="*60)
+            LOG.warning("Validation error: %s", error_message)
+            LOG.warning("Returning HTTP 400 Bad Request")
+            LOG.warning("="*60)
+            
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=error_message
+            )
+    except Exception as e:
+        # Errores inesperados
+        LOG.error("="*60)
+        LOG.error("Endpoint: DELETE /api/v1/users/%d - INTERNAL ERROR", user_id)
+        LOG.error("="*60)
+        LOG.error("Unexpected error: %s", str(e), exc_info=True)
+        LOG.error("  - user_id: %d", user_id)
         LOG.error("Returning HTTP 500 Internal Server Error")
         LOG.error("="*60)
         

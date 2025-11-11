@@ -12,6 +12,8 @@ from app.infrastructure.database.repositories.user_repository_impl import UserRe
 from app.application.use_cases.create_user import CreateUserUseCase
 from app.application.use_cases.get_user import GetUserUseCase
 from app.application.use_cases.get_all_users import GetAllUsersUseCase
+from app.application.use_cases.update_user import UpdateUserUseCase
+from app.application.use_cases.delete_user import DeleteUserUseCase
 
 LOG = logging.getLogger(__name__)
 
@@ -149,5 +151,51 @@ def get_get_all_users_use_case(
     LOG.debug("Dependencies: Creating GetAllUsersUseCase instance")
     use_case = GetAllUsersUseCase(repository)
     LOG.debug("Dependencies: GetAllUsersUseCase created (id: %s)", id(use_case))
+    return use_case
+
+
+def get_update_user_use_case(
+    repository: UserRepositoryImpl = Depends(get_user_repository)
+) -> UpdateUserUseCase:
+    """
+    Dependencia que provee el caso de uso UpdateUser.
+    
+    Args:
+        repository: Repositorio de usuarios (inyectado automáticamente)
+        
+    Returns:
+        UpdateUserUseCase: Instancia del caso de uso
+        
+    Usage:
+        @app.put("/users/{user_id}")
+        def update_user(use_case: UpdateUserUseCase = Depends(get_update_user_use_case)):
+            ...
+    """
+    LOG.debug("Dependencies: Creating UpdateUserUseCase instance")
+    use_case = UpdateUserUseCase(repository)
+    LOG.debug("Dependencies: UpdateUserUseCase created (id: %s)", id(use_case))
+    return use_case
+
+
+def get_delete_user_use_case(
+    repository: UserRepositoryImpl = Depends(get_user_repository)
+) -> DeleteUserUseCase:
+    """
+    Dependencia que provee el caso de uso DeleteUser.
+    
+    Args:
+        repository: Repositorio de usuarios (inyectado automáticamente)
+        
+    Returns:
+        DeleteUserUseCase: Instancia del caso de uso
+        
+    Usage:
+        @app.delete("/users/{user_id}")
+        def delete_user(use_case: DeleteUserUseCase = Depends(get_delete_user_use_case)):
+            ...
+    """
+    LOG.debug("Dependencies: Creating DeleteUserUseCase instance")
+    use_case = DeleteUserUseCase(repository)
+    LOG.debug("Dependencies: DeleteUserUseCase created (id: %s)", id(use_case))
     return use_case
 

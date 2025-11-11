@@ -102,6 +102,8 @@ async def startup_event():
     LOG.info("  - POST   /api/v1/users/       -> Create user")
     LOG.info("  - GET    /api/v1/users/{id}   -> Get user by ID")
     LOG.info("  - GET    /api/v1/users/       -> Get all users (with pagination)")
+    LOG.info("  - PUT    /api/v1/users/{id}   -> Update user")
+    LOG.info("  - DELETE /api/v1/users/{id}   -> Delete user")
     LOG.info("="*80)
 
 @app.on_event("shutdown")
