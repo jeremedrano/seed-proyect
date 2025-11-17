@@ -1,0 +1,38 @@
+[flake8]
+# Máximo de caracteres por línea
+max-line-length = 100
+
+# Complejidad ciclomática máxima
+max-complexity = 10
+
+# Directorios/archivos a excluir
+exclude = 
+    .git,
+    __pycache__,
+    venv,
+    .venv,
+    build,
+    dist,
+    *.egg-info,
+    .pytest_cache,
+    .mypy_cache,
+    __init__.py
+
+# Códigos de error a ignorar
+ignore = 
+    E203,  # Whitespace before ':' (conflicto con black)
+    W503,  # Line break before binary operator (conflicto con black)
+    E501,  # Line too long (ya lo maneja black)
+
+# Mostrar código de error en output
+show-source = True
+
+# Mostrar estadísticas
+statistics = True
+
+# Formato de output
+format = %(path)s:%(row)d:%(col)d: %(code)s %(text)s
+
+# Número de errores a mostrar antes de parar
+count = True
+

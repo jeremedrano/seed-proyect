@@ -3,17 +3,20 @@ Dependencias de FastAPI para inyección de dependencias.
 
 Estas funciones se usan con Depends() en los endpoints.
 """
+
 import logging
 from typing import Generator
+
 from fastapi import Depends
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, Session
-from app.infrastructure.database.repositories.user_repository_impl import UserRepositoryImpl
+from sqlalchemy.orm import Session, sessionmaker
+
 from app.application.use_cases.create_user import CreateUserUseCase
-from app.application.use_cases.get_user import GetUserUseCase
-from app.application.use_cases.get_all_users import GetAllUsersUseCase
-from app.application.use_cases.update_user import UpdateUserUseCase
 from app.application.use_cases.delete_user import DeleteUserUseCase
+from app.application.use_cases.get_all_users import GetAllUsersUseCase
+from app.application.use_cases.get_user import GetUserUseCase
+from app.application.use_cases.update_user import UpdateUserUseCase
+from app.infrastructure.database.repositories.user_repository_impl import UserRepositoryImpl
 
 LOG = logging.getLogger(__name__)
 
@@ -24,10 +27,7 @@ LOG.info("Initializing database configuration...")
 LOG.info("  - Database URL: %s", DATABASE_URL)
 
 # Engine de SQLAlchemy (singleton)
-engine = create_engine(
-    DATABASE_URL,
-    connect_args={"check_same_thread": False}  # Solo para SQLite
-)
+engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})  # Solo para SQLite
 
 LOG.info("✅ SQLAlchemy engine created successfully")
 LOG.info("  - Engine: %s", str(engine.url))
@@ -44,10 +44,10 @@ LOG.info("  - Autoflush: False")
 def get_db() -> Generator[Session, None, None]:
     """
     Dependencia que provee una sesión de DB.
-    
+
     Yields:
         Session: Sesión de SQLAlchemy
-        
+
     Usage:
         @app.get("/users/")
         def get_users(db: Session = Depends(get_db)):
@@ -67,13 +67,13 @@ def get_db() -> Generator[Session, None, None]:
 def get_user_repository(db: Session = Depends(get_db)) -> UserRepositoryImpl:
     """
     Dependencia que provee el repositorio de usuarios.
-    
+
     Args:
         db: Sesión de DB (inyectada automáticamente)
-        
+
     Returns:
         UserRepositoryImpl: Instancia del repositorio
-        
+
     Usage:
         @app.get("/users/")
         def get_users(repo: UserRepositoryImpl = Depends(get_user_repository)):
@@ -86,17 +86,17 @@ def get_user_repository(db: Session = Depends(get_db)) -> UserRepositoryImpl:
 
 
 def get_create_user_use_case(
-    repository: UserRepositoryImpl = Depends(get_user_repository)
+    repository: UserRepositoryImpl = Depends(get_user_repository),
 ) -> CreateUserUseCase:
     """
     Dependencia que provee el caso de uso CreateUser.
-    
+
     Args:
         repository: Repositorio de usuarios (inyectado automáticamente)
-        
+
     Returns:
         CreateUserUseCase: Instancia del caso de uso
-        
+
     Usage:
         @app.post("/users/")
         def create_user(use_case: CreateUserUseCase = Depends(get_create_user_use_case)):
@@ -109,17 +109,17 @@ def get_create_user_use_case(
 
 
 def get_get_user_use_case(
-    repository: UserRepositoryImpl = Depends(get_user_repository)
+    repository: UserRepositoryImpl = Depends(get_user_repository),
 ) -> GetUserUseCase:
     """
     Dependencia que provee el caso de uso GetUser.
-    
+
     Args:
         repository: Repositorio de usuarios (inyectado automáticamente)
-        
+
     Returns:
         GetUserUseCase: Instancia del caso de uso
-        
+
     Usage:
         @app.get("/users/{user_id}")
         def get_user(use_case: GetUserUseCase = Depends(get_get_user_use_case)):
@@ -132,17 +132,17 @@ def get_get_user_use_case(
 
 
 def get_get_all_users_use_case(
-    repository: UserRepositoryImpl = Depends(get_user_repository)
+    repository: UserRepositoryImpl = Depends(get_user_repository),
 ) -> GetAllUsersUseCase:
     """
     Dependencia que provee el caso de uso GetAllUsers.
-    
+
     Args:
         repository: Repositorio de usuarios (inyectado automáticamente)
-        
+
     Returns:
         GetAllUsersUseCase: Instancia del caso de uso
-        
+
     Usage:
         @app.get("/users/")
         def get_all_users(use_case: GetAllUsersUseCase = Depends(get_get_all_users_use_case)):
@@ -155,17 +155,17 @@ def get_get_all_users_use_case(
 
 
 def get_update_user_use_case(
-    repository: UserRepositoryImpl = Depends(get_user_repository)
+    repository: UserRepositoryImpl = Depends(get_user_repository),
 ) -> UpdateUserUseCase:
     """
     Dependencia que provee el caso de uso UpdateUser.
-    
+
     Args:
         repository: Repositorio de usuarios (inyectado automáticamente)
-        
+
     Returns:
         UpdateUserUseCase: Instancia del caso de uso
-        
+
     Usage:
         @app.put("/users/{user_id}")
         def update_user(use_case: UpdateUserUseCase = Depends(get_update_user_use_case)):
@@ -178,17 +178,17 @@ def get_update_user_use_case(
 
 
 def get_delete_user_use_case(
-    repository: UserRepositoryImpl = Depends(get_user_repository)
+    repository: UserRepositoryImpl = Depends(get_user_repository),
 ) -> DeleteUserUseCase:
     """
     Dependencia que provee el caso de uso DeleteUser.
-    
+
     Args:
         repository: Repositorio de usuarios (inyectado automáticamente)
-        
+
     Returns:
         DeleteUserUseCase: Instancia del caso de uso
-        
+
     Usage:
         @app.delete("/users/{user_id}")
         def delete_user(use_case: DeleteUserUseCase = Depends(get_delete_user_use_case)):
@@ -198,4 +198,3 @@ def get_delete_user_use_case(
     use_case = DeleteUserUseCase(repository)
     LOG.debug("Dependencies: DeleteUserUseCase created (id: %s)", id(use_case))
     return use_case
-

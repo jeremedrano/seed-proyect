@@ -1,0 +1,81 @@
+[MASTER]
+# Puntuación mínima para pasar el check
+fail-under=8.0
+
+# Archivos/directorios a ignorar
+ignore=.venv,venv,__pycache__,.pytest_cache
+ignore-patterns=test_.*?py
+
+[FORMAT]
+# Máximo de caracteres por línea
+max-line-length=100
+
+# Número máximo de líneas por módulo
+max-module-lines=500
+
+# Formato de indentación
+indent-string='    '
+
+[MESSAGES CONTROL]
+# Deshabilitar algunos mensajes específicos
+disable=
+    missing-module-docstring,
+    missing-class-docstring,
+    missing-function-docstring,
+    too-few-public-methods,
+    invalid-name,
+    line-too-long
+
+[DESIGN]
+# Máximo de argumentos por función
+max-args=5
+
+# Máximo de variables locales
+max-locals=15
+
+# Máximo de branches
+max-branches=12
+
+# Máximo de statements
+max-statements=50
+
+# Máximo de atributos por clase
+max-attributes=10
+
+[BASIC]
+# Convenciones de nombres
+argument-naming-style=snake_case
+attr-naming-style=snake_case
+class-naming-style=PascalCase
+const-naming-style=UPPER_CASE
+function-naming-style=snake_case
+method-naming-style=snake_case
+module-naming-style=snake_case
+variable-naming-style=snake_case
+
+# Permitir nombres de 1 carácter para iteradores
+good-names=i,j,k,ex,Run,_,id,db
+
+[IMPORTS]
+# Análisis de imports
+allow-wildcard-with-all=no
+
+[LOGGING]
+# Formato de logging
+logging-format-style=old
+
+[SIMILARITIES]
+# Mínimo de líneas similares para detectar duplicación
+min-similarity-lines=4
+
+# Ignorar imports al buscar duplicación
+ignore-imports=yes
+
+[TYPECHECK]
+# Ignorar imports faltantes para estos módulos
+ignored-modules=
+
+[CLASSES]
+# Lista de nombres de métodos válidos
+valid-metaclass-classmethod-first-arg=mcs
+

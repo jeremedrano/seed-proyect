@@ -1,5 +1,9 @@
 # Cursor Rules - Proyecto CRUD Usuarios con TDD
 
+**Lo mejor de dos mundos: Clean Architecture + TDD + Seguridad + Calidad**
+
+---
+
 ## 🧪 Filosofía de Desarrollo: TDD (Test-Driven Development)
 
 ### REGLA PRINCIPAL: Siempre escribir tests ANTES del código
@@ -10,50 +14,95 @@
 2. 🟢 **GREEN:** Escribir código mínimo para que pase
 3. 🔵 **REFACTOR:** Mejorar el código manteniendo tests verdes
 
-### Workflow TDD por Capas:
+### Workflow TDD por Capas (Clean Architecture):
 
 #### Para implementar una nueva funcionalidad (ej: CreateUser):
 
 **Paso 1: Test Domain (Entidad)**
 ```python
 # tests/unit/domain/test_user_entity.py
+@pytest.mark.unit
 def test_user_creation():
-    user = User(id=1, email="test@test.com", name="Test", age=25)
+    # Arrange
+    user_data = {"id": 1, "email": "test@test.com", "name": "Test", "age": 25}
+    
+    # Act
+    user = User(**user_data)
+    
+    # Assert
     assert user.email == "test@test.com"
+    assert user.name == "Test"
 ```
 → Luego implementar `app/domain/entities/user.py`
 
 **Paso 2: Test Application (Use Case)**
 ```python
 # tests/unit/use_cases/test_create_user.py
+@pytest.mark.unit
 def test_create_user_use_case(mock_repository):
+    # Arrange
     use_case = CreateUserUseCase(mock_repository)
+    
+    # Act
     user = use_case.execute("test@test.com", "Test", 25)
+    
+    # Assert
     mock_repository.save.assert_called_once()
+    assert user.email == "test@test.com"
 ```
 → Luego implementar `app/application/use_cases/create_user.py`
 
 **Paso 3: Test Infrastructure (Repository)**
 ```python
 # tests/integration/test_user_repository.py
+@pytest.mark.integration
 def test_repository_saves_user(db_session):
+    # Arrange
     repo = UserRepositoryImpl(db_session)
     user = User(None, "test@test.com", "Test", 25)
+    
+    # Act
     saved = repo.save(user)
+    
+    # Assert
     assert saved.id is not None
+    assert saved.email == "test@test.com"
 ```
 → Luego implementar `app/infrastructure/database/repositories/user_repository_impl.py`
 
 **Paso 4: Test Presentation (Endpoint)**
 ```python
 # tests/e2e/test_user_endpoints.py
+@pytest.mark.e2e
 def test_create_user_endpoint(client):
-    response = client.post("/api/v1/users/", json={
-        "email": "test@test.com", "name": "Test", "age": 25
-    })
+    # Arrange
+    user_data = {"email": "test@test.com", "name": "Test", "age": 25}
+    
+    # Act
+    response = client.post("/api/v1/users/", json=user_data)
+    
+    # Assert
     assert response.status_code == 201
+    assert response.json()["email"] == "test@test.com"
 ```
 → Luego implementar `app/presentation/api/v1/endpoints/users.py`
+
+### Patrón AAA (Arrange-Act-Assert):
+
+Todos los tests deben seguir este patrón para claridad y consistencia:
+```python
+def test_example():
+    # Arrange: Preparar datos y mocks
+    input_data = {"key": "value"}
+    mock_service = Mock()
+    
+    # Act: Ejecutar función bajo test
+    result = function_to_test(input_data, mock_service)
+    
+    # Assert: Verificar resultado
+    assert result.status == "success"
+    mock_service.save.assert_called_once()
+```
 
 ---
 
@@ -67,36 +116,168 @@ def test_create_user_endpoint(client):
 ### Estructura de archivos:
 ```
 app/
-├── domain/           # Entidades e interfaces (sin dependencias)
+├── domain/           # Entidades e interfaces (sin dependencias externas)
+│   ├── entities/     # Modelos de negocio puros
+│   ├── repositories/ # Interfaces de repositorios (contratos)
+│   └── exceptions/   # Excepciones de dominio
 ├── application/      # Use Cases (casos de uso)
+│   ├── use_cases/    # Lógica de aplicación
+│   └── dto/          # Data Transfer Objects
 ├── infrastructure/   # Adaptadores (DB, servicios externos)
+│   ├── database/     # Implementaciones de persistencia
+│   │   ├── models/   # Modelos de ORM (SQLAlchemy)
+│   │   └── repositories/  # Implementaciones de repositorios
+│   └── logging/      # Configuración de logging
 └── presentation/     # API (FastAPI endpoints)
+    ├── api/          # Endpoints REST
+    │   └── v1/       # Versión 1 de la API
+    ├── schemas/      # Pydantic schemas (request/response)
+    └── middleware/   # Middlewares de la API
 ```
+
+### Principios de Diseño:
+- **Separación de responsabilidades:** Cada módulo tiene una responsabilidad clara
+- **Inversión de dependencias:** Depender de abstracciones (interfaces), no de implementaciones
+- **Cohesión alta, acoplamiento bajo:** Módulos independientes y enfocados
+- **DRY (Don't Repeat Yourself):** Eliminar duplicación de código
 
 ---
 
 ## 📝 Convenciones de Código
 
-### Naming:
-- Entidades: `User`, `Product` (PascalCase)
-- Use Cases: `CreateUserUseCase`, `GetUserUseCase`
-- Repositorios: `UserRepository` (interfaz), `UserRepositoryImpl` (implementación)
-- Tests: `test_<what_it_does>`
+### Nomenclatura:
+- **Clases:** `PascalCase` (User, UserRepository, CreateUserUseCase)
+- **Funciones/métodos:** `snake_case` (process_user, get_user_by_id)
+- **Constantes:** `UPPER_SNAKE_CASE` (MAX_RETRIES, DEFAULT_TIMEOUT)
+- **Privados:** `_prefijo_underscore` (_parse_data, _validate_input)
+- **Tests:** `test_<what_it_does>` (test_user_creation, test_save_user)
+
+### Estándares de Código:
+- **Funciones:** Máximo 50 líneas, responsabilidad única
+- **Complejidad ciclomática:** < 10 por función
+- **Duplicación de código:** < 3%
+- **Línea máxima:** 100 caracteres
 
 ### Imports:
 - Usar imports absolutos: `from app.domain.entities.user import User`
 - No dejar imports sin usar
 - Ordenar imports: stdlib → third-party → local
 
-### Logging:
-- Usar logging exhaustivo en cada capa
-- Formato: `LOG.info("Use case: CreateUser - Starting for email=%s", email)`
-- Niveles: DEBUG (desarrollo), INFO (operaciones), WARNING (alertas), ERROR (errores)
+```python
+# Stdlib
+import os
+from datetime import datetime
+
+# Third-party
+from fastapi import FastAPI, HTTPException
+from sqlalchemy.orm import Session
+
+# Local
+from app.domain.entities.user import User
+from app.application.use_cases.create_user import CreateUserUseCase
+```
 
 ### Formato de código:
 - No abusar de saltos de línea (seguir ejemplo en user rules)
 - Mantener anotaciones compactas pero legibles
 - Máximo 100 caracteres por línea
+
+### Docstrings:
+```python
+def create_user(email: str, name: str, age: int) -> User:
+    """
+    Crea un nuevo usuario en el sistema.
+    
+    Args:
+        email: Email del usuario (debe ser válido)
+        name: Nombre completo del usuario
+        age: Edad del usuario (debe ser >= 18)
+        
+    Returns:
+        User: Usuario creado con ID asignado
+        
+    Raises:
+        ValueError: Si email es inválido o age < 18
+        DuplicateUserError: Si el email ya existe
+        
+    Example:
+        >>> user = create_user("test@test.com", "Test User", 25)
+        >>> print(user.id)
+        1
+    """
+    # Implementación...
+```
+
+---
+
+## 📝 Política de Logs
+
+### Durante el Desarrollo:
+- **Logs exhaustivos:** Agregar logs detallados en todas las etapas del desarrollo
+- Incluir logs para:
+  - Inicio y fin de operaciones importantes
+  - Valores de variables críticas
+  - Flujos condicionales (qué rama se ejecuta)
+  - Operaciones de entrada/salida (archivos, BD, APIs)
+  - Manejo de errores y excepciones
+
+### Después de Confirmar Funcionalidad:
+- Una vez confirmado que el código funciona correctamente
+- **Preguntar al usuario** si desea eliminar o reducir logs excesivos
+- Mantener únicamente logs esenciales para:
+  - Errores y excepciones
+  - Operaciones críticas del negocio
+  - Puntos de auditoría
+
+### Formato de Logs:
+```python
+# Setup logger por módulo
+import logging
+LOG = logging.getLogger(__name__)
+
+# Uso correcto
+LOG.info("Use case: CreateUser - Starting for email=%s", email)
+LOG.debug("User created with ID=%d, email=%s", user.id, user.email)
+LOG.warning("User not found: id=%d", user_id)
+LOG.error("Error creating user: %s", str(e), exc_info=True)
+
+# ❌ NO hacer:
+print("Debug message")  # Usar LOG
+LOG.info(f"User password: {password}")  # No logear info sensible
+```
+
+### Niveles de Log:
+- **DEBUG:** Información detallada de desarrollo (variables, flujos)
+- **INFO:** Operaciones normales del sistema (inicio/fin operaciones)
+- **WARNING:** Advertencias que no detienen el flujo (no encontrado, validación)
+- **ERROR:** Errores que requieren atención (excepciones manejadas)
+- **CRITICAL:** Errores críticos que detienen el sistema
+
+### Logging Seguro:
+```python
+# ❌ MAL - Exponer información sensible
+LOG.info(f"User logged in: {username} with password: {password}")
+LOG.info(f"API call with key: {api_key}")
+
+# ✅ BIEN - No logear información sensible
+LOG.info("User logged in: username=%s", username)
+LOG.info("API call successful [key: ***%s]", api_key[-4:])  # Solo últimos 4
+```
+
+---
+
+## 🎨 Uso de Emojis
+
+- **PERMITIDOS:** Solo en archivos `.md` (Markdown) para documentación
+- **PROHIBIDOS:** En todos los demás archivos:
+  - Código Python (`.py`)
+  - Scripts (`.sh`, `.ps1`)
+  - Archivos de configuración (`.json`, `.yaml`, `.yml`, `.ini`)
+  - Logs y mensajes de error
+  - Salidas de consola
+  - Comentarios en código
+
+**Nota:** Los logs, mensajes de error y cualquier salida de código deben usar texto plano sin emojis para mantener compatibilidad y profesionalismo.
 
 ---
 
@@ -105,77 +286,319 @@ app/
 ### Organización de Tests:
 ```
 tests/
-├── unit/          # Tests sin dependencias externas (rápidos)
-│   ├── domain/    # Tests de entidades
-│   └── use_cases/ # Tests de use cases (con mocks)
-├── integration/   # Tests con DB (en memoria)
-└── e2e/          # Tests de endpoints (servidor completo)
+├── unit/              # Tests sin dependencias externas (rápidos)
+│   ├── domain/        # Tests de entidades
+│   └── use_cases/     # Tests de use cases (con mocks)
+├── integration/       # Tests con DB (en memoria)
+└── e2e/              # Tests de endpoints (servidor completo)
 ```
 
-### Comandos:
+### Markers de Pytest:
+
+Todos los tests deben estar marcados con su tipo:
+```python
+@pytest.mark.unit
+def test_user_entity():
+    # Test unitario rápido sin dependencias
+
+@pytest.mark.integration
+def test_user_repository(db_session):
+    # Test de integración con BD
+
+@pytest.mark.e2e
+def test_user_endpoint(client):
+    # Test end-to-end del flujo completo
+```
+
+### Comandos de Testing:
+
 ```bash
-pytest tests/ -v                    # Todos los tests
-pytest tests/unit/ -v               # Solo unitarios (rápidos)
-pytest tests/e2e/ -v                # Solo e2e
-pytest tests/ --cov=app             # Con cobertura
-ptw tests/                          # Watch mode (TDD)
+# TDD Workflow
+ptw tests/unit/                          # Watch mode para TDD (desarrollo activo)
+
+# Todos los tests
+pytest tests/ -v                         # Verboso con detalles
+
+# Por tipo (usando markers)
+pytest tests/ -v -m unit                 # Solo unitarios (rápidos - para TDD)
+pytest tests/ -v -m integration          # Solo integración
+pytest tests/ -v -m e2e                  # Solo e2e
+
+# Por directorio
+pytest tests/unit/ -v                    # Solo unitarios (rápidos)
+pytest tests/integration/ -v             # Solo integración
+pytest tests/e2e/ -v                     # Solo e2e
+
+# Con cobertura
+pytest tests/ --cov=app                  # Cobertura básica
+pytest tests/ --cov=app --cov-report=html  # Reporte HTML
+pytest tests/ --cov=app --cov-report=term-missing  # Ver líneas no cubiertas
+pytest tests/ --cov=app --cov-fail-under=80  # Fallar si < 80%
+
+# Tests específicos
+pytest tests/ -k "test_create_user"      # Tests que contengan "create_user"
+pytest tests/unit/test_user_entity.py::test_user_creation  # Test específico
+
+# Modo debug
+pytest tests/ -v -s                      # Con print statements
+pytest tests/ -v --pdb                   # Debugger on failure
 ```
 
 ### Cobertura mínima:
-- **Unit tests:** > 90% de domain y application
-- **Integration tests:** Repositorios completos
-- **E2E tests:** Happy paths de todos los endpoints
+- **Global:** ≥ 80% (obligatorio)
+- **Domain:** ≥ 90% (entidades puras, críticas)
+- **Application:** ≥ 90% (lógica de negocio)
+- **Infrastructure:** ≥ 70% (integraciones)
+- **Presentation:** ≥ 80% (endpoints)
+
+### Tipos de Tests Requeridos:
+- **Unit Tests:** Para funciones y métodos individuales (>90% coverage)
+- **Integration Tests:** Para interacciones con servicios externos (DB, APIs)
+- **E2E Tests:** Happy paths de flujos principales
+- **Edge Cases:** Validar casos límite y errores
+
+---
+
+## 🔒 Política de Seguridad
+
+### Seguridad por Diseño (Security by Design)
+
+- **Principio obligatorio:** Toda funcionalidad debe considerar seguridad desde el diseño
+- Aplicar principios de:
+  - **Defensa en profundidad:** Múltiples capas de seguridad
+  - **Mínimo privilegio:** Acceso mínimo necesario
+  - **Fail-safe defaults:** Configuración segura por defecto
+  - **Validación de entrada:** Nunca confiar en datos externos
+
+### Protección de Información Sensible
+
+#### NUNCA commitear:
+- ❌ Contraseñas, API keys, tokens
+- ❌ Credenciales de bases de datos
+- ❌ Certificados y claves privadas
+- ❌ Información personal identificable (PII)
+
+#### Usar variables de entorno:
+```python
+# ❌ MAL - Hardcoded credentials
+DB_PASSWORD = "mi_password_123"
+API_KEY = "sk_live_abc123"
+
+# ✅ BIEN - Variables de entorno
+import os
+
+DB_PASSWORD = os.getenv('DB_PASSWORD')
+API_KEY = os.getenv('API_KEY')
+
+if not DB_PASSWORD:
+    raise ValueError("DB_PASSWORD environment variable not set")
+```
+
+#### Archivos a proteger:
+- `.env` debe estar en `.gitignore`
+- Archivos de configuración con secretos
+- Logs con información sensible
+- Base de datos de desarrollo (`*.db`)
+
+### Vulnerabilidades Comunes a Evitar
+
+#### 1. Inyección SQL
+```python
+# ❌ MAL - Vulnerable a SQL injection
+query = f"SELECT * FROM users WHERE email = '{email}'"
+
+# ✅ BIEN - Usar ORM (SQLAlchemy) con parámetros
+user = session.query(User).filter(User.email == email).first()
+```
+
+#### 2. Validación de Entrada
+```python
+# ✅ BIEN - Validar con Pydantic
+from pydantic import BaseModel, EmailStr, Field
+
+class UserCreate(BaseModel):
+    email: EmailStr
+    name: str = Field(..., min_length=1, max_length=100)
+    age: int = Field(..., ge=18, le=120)
+
+# ✅ BIEN - Validar en domain
+def create_user(email: str, name: str, age: int) -> User:
+    if not email or '@' not in email:
+        raise ValueError("Invalid email format")
+    if age < 18:
+        raise ValueError("Age must be >= 18")
+    # ...
+```
+
+#### 3. Manejo Seguro de Errores
+```python
+# ❌ MAL - Exponer detalles internos
+@app.post("/users/")
+def create_user(user: UserCreate):
+    try:
+        return service.create_user(user)
+    except Exception as e:
+        return {"error": str(e)}  # Puede exponer stack trace
+
+# ✅ BIEN - Mensaje genérico al usuario, detalles en logs
+@app.post("/users/")
+def create_user(user: UserCreate):
+    try:
+        return service.create_user(user)
+    except ValueError as e:
+        LOG.warning("User validation failed: %s", e)
+        raise HTTPException(status_code=400, detail="Invalid user data")
+    except Exception as e:
+        LOG.error("Error creating user: %s", e, exc_info=True)
+        raise HTTPException(status_code=500, detail="Internal server error")
+```
+
+### Escaneo de Vulnerabilidades
+
+#### Herramientas obligatorias:
+```bash
+# Python - Escaneo de dependencias
+pip-audit                                # Vulnerabilidades en dependencias
+safety check                             # Vulnerabilidades conocidas
+
+# Análisis estático de seguridad
+bandit -r app/                           # Security linting
+
+# Escaneo de secretos (antes de commit)
+git secrets --scan                       # Secretos en commits
+```
+
+---
+
+## 🎯 Política de Calidad de Código
+
+### Auditoría de Calidad
+
+- **Obligatorio:** Auditar la calidad del código antes de commits
+- Programar siempre con el objetivo de cumplir las reglas auditadas
+- Mantener estándares de calidad consistentes en todo el proyecto
+
+### Herramientas de Análisis de Calidad
+
+```bash
+# Python - Análisis estático
+pylint app/ --fail-under=8.0             # Lint check
+flake8 app/ --max-line-length=100        # Style check
+mypy app/ --strict                       # Type checking
+
+# Formateo de código
+black app/ --check                       # Check format
+black app/                               # Auto-format
+isort app/ --check-only                  # Check imports order
+isort app/                               # Sort imports
+
+# Complejidad y mantenibilidad
+radon cc app/ -a -nb                     # Complejidad ciclomática
+radon mi app/ -nb                        # Índice de mantenibilidad
+```
+
+### Métricas de Calidad:
+- **Complejidad ciclomática:** < 10 por función
+- **Duplicación de código:** < 3%
+- **Cobertura de tests:** ≥ 80%
+- **Pylint score:** ≥ 8.0/10
+- **Funciones:** ≤ 50 líneas
+- **Líneas por archivo:** ≤ 500 (ideal), ≤ 1000 (máximo)
+
+### Comentarios:
+```python
+# ❌ MAL - Comentario obvio
+# Incrementar contador en 1
+counter += 1
+
+# ✅ BIEN - Explicar decisión no obvia
+# Usamos Session.merge() en lugar de add() porque el objeto
+# puede venir de otra sesión y causaría DetachedInstanceError
+session.merge(user)
+```
 
 ---
 
 ## 🚫 Prohibiciones
 
 ### NO hacer:
-- ❌ Implementar código sin test previo
+- ❌ Implementar código sin test previo (TDD obligatorio)
 - ❌ Commitear código con tests fallando
-- ❌ Domain con dependencias a frameworks
+- ❌ Domain con dependencias a frameworks (FastAPI, SQLAlchemy, etc.)
 - ❌ Lógica de negocio en controllers (presentation)
+- ❌ Funciones >50 líneas sin refactorizar
+- ❌ Complejidad ciclomática >10
 - ❌ Dejar imports sin usar
 - ❌ Usar `print()` (usar logging)
-- ❌ Hardcodear valores (usar config o env vars)
+- ❌ Hardcodear valores sensibles (usar config o env vars)
 - ❌ Hacer queries SQL directos (usar ORM)
+- ❌ Usar `except: pass` sin logging
+- ❌ Exponer información sensible en logs
+- ❌ Ignorar warnings de linters
+- ❌ Duplicar código (usar funciones/clases)
+- ❌ Tests sin markers (@pytest.mark.unit/integration/e2e)
 
 ### Siempre hacer:
-- ✅ Test primero (TDD)
-- ✅ Un test, un assert principal
-- ✅ Nombres descriptivos
-- ✅ Código simple y legible
+- ✅ Test primero (TDD: Red → Green → Refactor)
+- ✅ Patrón AAA en tests (Arrange-Act-Assert)
+- ✅ Nombres descriptivos y claros
+- ✅ Código simple y legible (KISS)
 - ✅ Refactorizar con tests verdes
 - ✅ Logging en operaciones importantes
+- ✅ Validar entradas externas
+- ✅ Documentar con docstrings
+- ✅ Revisar código con linters
+- ✅ Mantener coverage ≥ 80%
+- ✅ Marcar tests con @pytest.mark.*
 
 ---
 
-## 📋 Checklist antes de implementar una feature:
+## 📋 Checklist Pre-Commit
 
+### Durante Implementación:
 - [ ] ¿Escribí el test primero? (🔴 RED)
 - [ ] ¿El test falla por la razón correcta?
 - [ ] ¿Escribí el código mínimo para pasar? (🟢 GREEN)
 - [ ] ¿Todos los tests pasan?
 - [ ] ¿Refactoricé mejorando el diseño? (🔵 REFACTOR)
-- [ ] ¿La cobertura se mantiene alta?
+- [ ] ¿Los tests siguen patrón AAA (Arrange-Act-Assert)?
+- [ ] ¿Los tests tienen markers (@pytest.mark.unit/integration/e2e)?
+
+### Calidad de Código:
+- [ ] ¿La cobertura se mantiene ≥ 80%?
+- [ ] ¿Las funciones tienen ≤ 50 líneas?
+- [ ] ¿La complejidad ciclomática es < 10?
 - [ ] ¿El código sigue Clean Architecture?
+- [ ] ¿No hay duplicación excesiva de código?
 - [ ] ¿Agregué logging apropiado?
 - [ ] ¿Documenté con docstrings?
 - [ ] ¿No dejé imports sin usar?
+- [ ] ¿Nomenclatura clara y consistente?
+
+### Seguridad:
+- [ ] ¿Validé todas las entradas externas?
+- [ ] ¿No expuse información sensible en logs?
+- [ ] ¿No hay credenciales hardcodeadas?
+- [ ] ¿Manejo seguro de errores (no exponer detalles internos)?
+
+### Antes de Hacer Commit:
+```bash
+# Ejecutar este bloque de comandos
+pytest tests/ -v                         # Todos los tests pasan
+pytest tests/ --cov=app --cov-fail-under=80  # Coverage ≥ 80%
+pylint app/ --fail-under=8.0            # Pylint ≥ 8.0
+flake8 app/ --max-line-length=100       # Sin errores de estilo
+black app/ --check                       # Código formateado
+isort app/ --check-only                 # Imports ordenados
+pip-audit                                # Sin vulnerabilidades
+bandit -r app/                           # Sin issues de seguridad
+```
 
 ---
 
-## 🎯 Objetivo del Proyecto
+## 📚 Documentación del Proyecto
 
-**PoC:** CRUD de usuarios sin autenticación, con Clean Architecture y TDD.
-
-**Futuro:** Agregar autenticación JWT, compliance, y otras features sin tocar código existente (gracias a Clean Architecture).
-
----
-
-## 📝 Documentación del Proyecto
-
-### **Estructura de Documentación:**
+### Estructura de Documentación:
 
 ```
 docs/
@@ -184,10 +607,11 @@ docs/
 │   └── YYYY-MM-DD_fase-N_descripcion.md
 │
 └── changelog-ia/       # Bitácora privada de IA (NO SE SUBE - ignorado en git)
-    └── notas-ia.md     # Decisiones, experimentos, notas temporales
+    ├── README.md
+    └── changelog-YYYY-MM-DD-HH-MM.md
 ```
 
-### **docs/changelog/ - Documentación Oficial (SE SUBE A GIT)**
+### docs/changelog/ - Documentación Oficial (SE SUBE A GIT)
 
 **Propósito:** Historial oficial de desarrollo del proyecto.
 
@@ -198,8 +622,7 @@ docs/changelog/
 └── YYYY-MM-DD_feature-nombre.md
 ```
 
-### **Contenido requerido en cada changelog:**
-
+**Contenido requerido:**
 ```markdown
 # Changelog - [Título de la Fase/Feature]
 
@@ -211,7 +634,7 @@ docs/changelog/
 [Qué se quería lograr]
 
 ## ✅ Cambios Realizados
-[Qué se hizo específicamente]
+[Qué se hizo específicamente - archivos, funciones, clases]
 
 ## 📚 Aprendizajes
 [Qué se aprendió durante el desarrollo]
@@ -226,58 +649,307 @@ docs/changelog/
 [Qué sigue después de esto]
 ```
 
-### **Cuándo crear changelog oficial (docs/changelog/):**
+### docs/changelog-ia/ - Bitácora Privada (NO SE SUBE)
 
+**Propósito:** Proveer contexto detallado para entrenamiento de la IA.
+
+**Obligatorio:** La IA DEBE leer estos changelogs antes de cualquier desarrollo.
+
+**NO VERSIONADO:** Este directorio NO debe subirse a Git (está en .gitignore).
+
+**Formato de archivos:**
+```
+docs/changelog-ia/
+└── changelog-YYYY-MM-DD-HH-MM.md
+```
+
+**Contenido requerido:**
+```markdown
+# Changelog IA - YYYY-MM-DD HH:MM
+
+## Contexto
+- Situación inicial del proyecto
+- Problema a resolver
+- Objetivo del cambio
+
+## Cambios Realizados
+
+### Archivos Modificados
+- `app/domain/entities/user.py`: Agregada validación de email en línea 25
+- `app/application/use_cases/create_user.py`: Refactorizada lógica de validación
+
+### Funciones/Clases Añadidas
+- `validate_email(email: str) -> bool`: Valida formato de email
+- `UserValidator`: Clase para validaciones de usuario
+
+### Funciones/Clases Modificadas
+- `CreateUserUseCase.execute()`: Ahora usa UserValidator, reducida complejidad de 12 a 6
+
+### Funciones/Clases Eliminadas
+- `_validate_email_format()`: Consolidada en UserValidator
+
+## Tests Añadidos
+- `tests/unit/test_user_validator.py`: 10 tests, coverage 100%
+- `tests/integration/test_create_user_integration.py`: 5 tests
+
+## Dependencias
+- Agregado: `pydantic==2.5.0`
+- Actualizado: `fastapi==0.104.1` (de 0.103.0)
+
+## Comandos Ejecutados
+```bash
+pytest tests/ -v
+pytest tests/ --cov=app --cov-report=html
+pylint app/ --fail-under=8.0
+```
+
+## Resultados de Auditorías
+
+### Seguridad
+- pip-audit: 0 vulnerabilidades
+- bandit: 0 issues críticos
+
+### Calidad
+- pylint: 8.7/10 (mejorado de 7.8)
+- complejidad ciclomática: max 8 (reducido de 12)
+- coverage: 85% (incrementado de 78%)
+
+## Errores Encontrados y Soluciones
+- **Error:** ValidationError al crear usuario sin email
+  - **Solución:** Agregada validación en UserValidator antes de llamar al repositorio
+
+## Notas Técnicas
+- Implementado patrón Strategy para validaciones
+- Considerada performance: validaciones en O(1)
+- Refactorización redujo duplicación de 5% a 1%
+
+## Decisiones de Diseño
+- **Decisión:** Usar UserValidator en lugar de validación inline
+  - **Razón:** Reducir duplicación y facilitar testing
+  - **Trade-off:** Ligera sobrecarga de abstracción vs mantenibilidad
+```
+
+### Cuándo Crear Changelog:
+
+**Oficial (docs/changelog/):**
 - ✅ Al completar cada fase del plan
 - ✅ Al implementar una feature importante
 - ✅ Al resolver un problema complejo que otros deben conocer
 - ✅ Antes de commits importantes
 - ✅ Cuando hay decisiones técnicas que impactan el proyecto
 
-### **docs/changelog-ia/ - Bitácora Privada (NO SE SUBE)**
+**IA (docs/changelog-ia/):**
+- ✅ Después de cada desarrollo significativo
+- ✅ Cuando se ejecutan auditorías de seguridad/calidad
+- ✅ Al refactorizar código existente
+- ✅ Cuando se encuentran y resuelven bugs
+- ✅ Para proveer contexto para futuras sesiones con IA
 
-**Propósito:** Notas privadas de IA, experimentos, decisiones temporales.
-
-**Cuándo usar:**
-- 🔸 Notas de sesión de desarrollo con IA
-- 🔸 Experimentos que no funcionaron (pero aprendiste algo)
-- 🔸 Decisiones temporales a revisar después
-- 🔸 Pensamientos en voz alta durante desarrollo
-- 🔸 Contexto que la IA necesita entre sesiones pero no es documentación oficial
-
-**Formato libre:** Puede ser menos formal que el changelog oficial.
-
-### **Ejemplo de uso:**
-
-```markdown
-# Changelog - Fase 2: Estructura Base del Proyecto
-
-**Fecha:** 2025-11-10
-**Estado:** ✅ COMPLETADA
-
-## ✅ Cambios Realizados
-- Creada estructura de directorios de Clean Architecture
-- Creados todos los __init__.py
-- Configurado conftest.py con fixtures básicos
-
-## 📚 Aprendizajes
-- PowerShell requiere `-Force` para crear directorios anidados
-- pytest encuentra tests automáticamente con convención test_*.py
-```
-
-### **Beneficios:**
-
-1. **Contexto preservado:** La IA recuerda decisiones pasadas
-2. **Aprendizajes documentados:** No repetir errores
-3. **Historial de desarrollo:** Trazabilidad del proyecto
-4. **Onboarding rápido:** Nuevas IAs entienden el proyecto rápidamente
+### Reglas de Documentación:
+1. **Obligatorio:** Crear changelog en AMBOS directorios después de cada desarrollo significativo
+2. **Lectura obligatoria:** La IA DEBE leer changelogs de `docs/changelog-ia/` al iniciar tareas
+3. **Nomenclatura:**
+   - Oficial: `YYYY-MM-DD_fase-N_descripcion.md`
+   - IA: `changelog-YYYY-MM-DD-HH-MM.md`
+4. **Momento:** Crear changelogs DESPUÉS de confirmar funcionalidad
+5. **Detalle:** Changelog-IA exhaustivo; changelog-oficial ejecutivo
+6. **Versionado:**
+   - `docs/changelog-ia/` → NO versionado (local del desarrollador)
+   - `docs/changelog/` → SÍ versionado (compartido con equipo)
 
 ---
 
-## 📚 Referencias
+## 🛠️ Configuración de Herramientas
+
+### pytest.ini (Ya configurado):
+```ini
+[pytest]
+testpaths = tests
+python_files = test_*.py
+python_classes = Test*
+python_functions = test_*
+addopts = 
+    -v
+    --strict-markers
+    --tb=short
+markers =
+    unit: Unit tests (fast, no external dependencies)
+    integration: Integration tests (with database)
+    e2e: End-to-end tests (full API flow)
+```
+
+### .pylintrc (Recomendado crear):
+```ini
+[MASTER]
+fail-under=8.0
+
+[FORMAT]
+max-line-length=100
+
+[MESSAGES CONTROL]
+disable=
+    missing-module-docstring,
+    too-few-public-methods
+
+[DESIGN]
+max-args=5
+max-locals=15
+max-branches=12
+max-statements=50
+```
+
+### .flake8 (Recomendado crear):
+```ini
+[flake8]
+max-line-length = 100
+exclude = .git,__pycache__,venv,.venv,__init__.py
+ignore = E203, W503
+```
+
+### pyproject.toml (Recomendado crear - Black & isort):
+```toml
+[tool.black]
+line-length = 100
+target-version = ['py39']
+exclude = '''
+/(
+    \.git
+  | __pycache__
+  | venv
+  | \.venv
+)/
+'''
+
+[tool.isort]
+profile = "black"
+line_length = 100
+skip = [".venv", "venv", "__pycache__"]
+```
+
+### requirements-dev.txt (Recomendado crear):
+```txt
+# Testing
+pytest>=7.4
+pytest-cov>=4.1
+pytest-mock>=3.12
+pytest-watch>=4.2
+
+# Code Quality
+pylint>=3.0
+flake8>=6.1
+mypy>=1.7
+black>=23.12
+isort>=5.12
+radon>=6.0
+
+# Security
+pip-audit>=2.6
+bandit>=1.7
+```
+
+---
+
+## 📚 Comandos Rápidos
+
+### TDD Workflow:
+```bash
+# Watch mode para desarrollo activo
+ptw tests/unit/
+
+# Ejecutar tests específicos mientras desarrollas
+pytest tests/unit/test_create_user_use_case.py -v
+```
+
+### Testing Completo:
+```bash
+# Todos los tests
+pytest tests/ -v
+
+# Por tipo (usando markers)
+pytest tests/ -v -m unit                 # Solo unitarios
+pytest tests/ -v -m integration          # Solo integración
+pytest tests/ -v -m e2e                  # Solo e2e
+
+# Con cobertura
+pytest tests/ --cov=app --cov-report=html
+pytest tests/ --cov=app --cov-report=term-missing
+pytest tests/ --cov=app --cov-fail-under=80
+
+# Tests específicos
+pytest tests/ -k "test_create_user"
+pytest tests/unit/test_user_entity.py::test_user_creation
+```
+
+### Calidad de Código:
+```bash
+# Lint y formato
+pylint app/ --fail-under=8.0
+flake8 app/ --max-line-length=100
+black app/ --check
+isort app/ --check-only
+
+# Auto-format
+black app/
+isort app/
+
+# Complejidad
+radon cc app/ -a -nb
+radon mi app/ -nb
+```
+
+### Seguridad:
+```bash
+# Escaneo de vulnerabilidades
+pip-audit
+bandit -r app/
+```
+
+### Pre-Commit Completo:
+```bash
+# Ejecutar todo antes de commit
+pytest tests/ -v && \
+pytest tests/ --cov=app --cov-fail-under=80 && \
+pylint app/ --fail-under=8.0 && \
+flake8 app/ --max-line-length=100 && \
+black app/ --check && \
+isort app/ --check-only && \
+pip-audit && \
+bandit -r app/
+```
+
+---
+
+## 🎯 Objetivo del Proyecto
+
+**PoC:** CRUD de usuarios sin autenticación, con Clean Architecture y TDD estricto.
+
+**Características:**
+- FastAPI como framework web
+- SQLAlchemy como ORM
+- SQLite como base de datos (desarrollo)
+- Pytest para testing
+- Clean Architecture con separación de capas
+- TDD como metodología de desarrollo
+
+**Futuro:** Agregar autenticación JWT, autorización, compliance, y otras features sin tocar código existente (gracias a Clean Architecture).
+
+**Principios:**
+- TDD estricto para nueva funcionalidad
+- Cobertura de tests ≥ 80%
+- Seguridad por diseño
+- Código limpio y mantenible (pylint ≥ 8.0, complejidad < 10)
+- Documentación exhaustiva
+
+---
+
+## 📖 Referencias
 
 - [Clean Architecture (Uncle Bob)](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html)
 - [TDD by Example (Kent Beck)](https://www.amazon.com/Test-Driven-Development-Kent-Beck/dp/0321146530)
+- [Clean Code (Robert C. Martin)](https://www.amazon.com/Clean-Code-Handbook-Software-Craftsmanship/dp/0132350882)
+- [FastAPI Documentation](https://fastapi.tiangolo.com/)
 - [FastAPI Testing](https://fastapi.tiangolo.com/tutorial/testing/)
 - [Pytest Documentation](https://docs.pytest.org/)
-
+- [Python Security Best Practices](https://python.readthedocs.io/en/stable/library/security_warnings.html)
+- [PEP 8 - Style Guide](https://peps.python.org/pep-0008/)
+- [SQLAlchemy Documentation](https://docs.sqlalchemy.org/)

@@ -9,6 +9,40 @@ Desarrollo de una **Prueba de Concepto (PoC)** de API REST con operaciones **CRU
 
 ---
 
+## 🛠️ Herramientas de Calidad y Seguridad
+
+Este proyecto ahora incluye un **conjunto completo de herramientas** para garantizar calidad de código y seguridad:
+
+### 📋 Testing
+- **pytest** con markers (unit, integration, e2e)
+- **pytest-cov** para cobertura ≥ 80%
+- **pytest-watch** para TDD continuo
+
+### 🎨 Calidad de Código
+- **pylint** (≥ 8.0/10)
+- **flake8** (PEP 8 compliance)
+- **black** (auto-format)
+- **isort** (import sorting)
+- **mypy** (type checking)
+- **radon** (complejidad ciclomática < 10)
+
+### 🔒 Seguridad
+- **pip-audit** (vulnerabilidades en dependencias)
+- **bandit** (security issues en código)
+
+### 📚 Documentación
+Ver guía completa: [`docs/HERRAMIENTAS_CALIDAD.md`](docs/HERRAMIENTAS_CALIDAD.md)
+
+### 🖥️ Script de PowerShell
+Ejecuta `.\scripts-dev.ps1` para acceder a menú interactivo con todas las herramientas.
+
+**Pre-commit completo:**
+```powershell
+.\scripts-dev.ps1  # Opción 16 - Ejecuta todas las verificaciones
+```
+
+---
+
 ## 🎯 Objetivos del Proyecto (PoC)
 
 1. ✅ Implementar CRUD completo de usuarios (Create, Read, Update, Delete)
